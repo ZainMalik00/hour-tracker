@@ -1,4 +1,16 @@
-.navbar-brand {
+#customNav {
+    background-color: #b7e4c7;
     font-family: Lato, Arial, serif;
+    --bs-navbar-color: #081c15;
+    /* background-color: #52b788; */
+}
+
+.navbar-brand {
     font-weight: bold;
+}
+
+.nav-item {
+    /* font-family: Lato, Arial, serif;
+    font-weight: bold;  
+    color: #081c15; */
 }
