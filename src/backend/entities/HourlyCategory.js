@@ -1,4 +1,4 @@
-export const Category = (
+export const HourlyCategory = (
     name = "",
     T0000 = 0, T0030 = 0,
     T0100 = 0, T0130 = 0,
