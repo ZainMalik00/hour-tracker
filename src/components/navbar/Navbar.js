@@ -1,21 +1,24 @@
 import React, { useState, useEffect } from 'react';
+import './Navbar.css';
+import '../../index.css';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import { auth, provider } from '../../backend/firebase.js'
 import { signInWithPopup, signOut } from 'firebase/auth';
-
-import './Navbar.css';
-import '../../index.css';
+import UserService from '../../backend/services/user-service.js';
+import { User } from '../../backend/entities/User';
+import { DefaultCategories } from '../../backend/entities/DefaultCategories';
 
 function Navbar() {
     const [isAuth, setIsAuth] = useState(false);
-    const [username, setUsername] = useState("Login");
-    
+    const [userData, setUserData] = useState(["Login"]);
+
     useEffect(() => {
         const name = localStorage.getItem('name');
+        const email = localStorage.getItem('email');
         const authExists = localStorage.getItem('isAuth');
         
         if(name) {
-            setUsername(name);
+            setUserData([name, email]);
         }
 
         if(authExists){
@@ -28,12 +31,13 @@ function Navbar() {
         signInWithPopup(auth, provider).then((result) => {
             localStorage.setItem("isAuth", true);
             localStorage.setItem("name", result.user.displayName);
+            localStorage.setItem("email", result.user.email);
             setIsAuth(true);
-            setUsername(result.user.displayName);
-            
+            setUserData([result.user.displayName, result.user.email]);
+            addUser(result.user.displayName, result.user.email, "");
         },
         (error) => {
-            setUsername("Login");
+            setUserData(["Login"]);
         }); 
     };
 
@@ -42,10 +46,25 @@ function Navbar() {
             signOut(auth).then(() => {
                 localStorage.clear();
                 setIsAuth(false);
-                setUsername("Login");
+                setUserData(["Login"]);
             }, (error) => {});
         }
     };
+
+    const addUser = async (name, email, password) => {
+        const newUser = User(
+            name,
+            email,
+            password,
+            DefaultCategories,
+        );
+
+        const existingUser = await UserService.getUserByEmail(newUser.email);
+
+        if(existingUser.length == 0){
+            UserService.addUser(newUser);
+        }
+    }
 
     return(
         <Router>
@@ -60,7 +79,7 @@ function Navbar() {
                         <a className="nav-item nav-link" href="#">Insert</a>
                         <a className="nav-item nav-link" href="#">Charts</a>
                         <a className="nav-item nav-link" href="#">Analytics</a>
-                        <a className="nav-item nav-link" href="#" onClick={isAuth ? signOutUser : signInWithGoogle}>{username}</a>
+                        <a className="nav-item nav-link" href="#" onClick={isAuth ? signOutUser : signInWithGoogle}>{userData[0]}</a>
                     </div>
                 </div>
             </nav>

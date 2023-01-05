@@ -3,7 +3,7 @@ export const User = (
     email = "",
     password = "",
     categories = [],
-    hourly = [],
+    daily = [],
     weekly = [],
     hourly = []
 ) => {
@@ -12,7 +12,7 @@ export const User = (
         email: email, 
         password: password, 
         categories: categories,
-        hourly: hourly, 
+        daily: daily, 
         weekly: weekly,
         hourly: hourly
     }
