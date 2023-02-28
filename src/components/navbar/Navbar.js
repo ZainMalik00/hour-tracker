@@ -5,7 +5,9 @@ import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import { auth, provider } from '../../backend/firebase.js'
 import { signInWithPopup, signOut } from 'firebase/auth';
 import { AddUser } from '../../backend/user-stories/users/add-user/add-user';
-import { RemoveUser } from '../../backend/user-stories/users/remove-user/remove-user';
+import { AddCategory } from '../../backend/user-stories/categories/add-category/add-category';
+import { RemoveCategory } from '../../backend/user-stories/categories/remove-category/remove-category';
+import { UpdateCategory } from '../../backend/user-stories/categories/update-category/update-category';
 
 function Navbar() {
     const [isAuth, setIsAuth] = useState(false);
@@ -50,15 +52,28 @@ function Navbar() {
         }
     };
 
-    const deleteUser = (callback) => {
-        RemoveUser(userData[1]).then(() => {
-            signOut(auth).then(() => {
-                localStorage.clear();
-                setIsAuth(false);
-                setUserData(["Login"]);
-            }, (error) => {});
-        });
+    // const deleteUser = () => {
+    //     RemoveUser(userData[1]).then(() => {
+    //         signOut(auth).then(() => {
+    //             localStorage.clear();
+    //             setIsAuth(false);
+    //             setUserData(["Login"]);
+    //         }, (error) => {});
+    //     });
+    // };
+
+    const addCategory = () => {
+        AddCategory(userData[1], "NEW"); 
     };
+
+    const removeCategory = () => {
+        RemoveCategory(userData[1], "NEW");
+    };
+
+    const updateCategory = () => {
+        UpdateCategory(userData[1], "NEW", "NEW2");
+    };
+
 
     return(
         <Router>
@@ -74,7 +89,10 @@ function Navbar() {
                         <a className="nav-item nav-link" href="#">Charts</a>
                         <a className="nav-item nav-link" href="#">Analytics</a>
                         <a className="nav-item nav-link" href="#" onClick={isAuth ? signOutUser : signInWithGoogle}>{userData[0]}</a>
-                        <a className="nav-item nav-link" href="#" onClick={deleteUser}>Delete User</a>
+                        {/* <a className="nav-item nav-link" href="#" onClick={deleteUser}>Delete User</a> 
+                        <a className="nav-item nav-link" href="#" onClick={addCategory}>Add Category</a>
+                        <a className="nav-item nav-link" href="#" onClick={removeCategory}>Remove Category</a>
+                        <a className="nav-item nav-link" href="#" onClick={updateCategory}>Update Category</a> */}
                     </div>
                 </div>
             </nav>

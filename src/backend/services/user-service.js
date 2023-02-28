@@ -3,11 +3,11 @@ import { collection, query, where, addDoc, getDocs, deleteDoc, doc } from "fireb
 
 const UserService = {
     addUser: async function(user){
-        const docRef = await addDoc(collection(db, "users"), user);
+        await addDoc(collection(db, "users"), user);
     },
 
     removeUser: async function (username){
-        const docRef = await deleteDoc(doc(db, "users", username));
+        await deleteDoc(doc(db, "users", username));
     },
 
     getUserIdByEmail: async function(email){
