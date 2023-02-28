@@ -4,9 +4,8 @@ import '../../index.css';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import { auth, provider } from '../../backend/firebase.js'
 import { signInWithPopup, signOut } from 'firebase/auth';
-import UserService from '../../backend/services/user-service.js';
-import { User } from '../../backend/entities/User';
-import { DefaultCategories } from '../../backend/entities/DefaultCategories';
+import { AddUser } from '../../backend/user-stories/users/add-user/add-user';
+import { RemoveUser } from '../../backend/user-stories/users/remove-user/remove-user';
 
 function Navbar() {
     const [isAuth, setIsAuth] = useState(false);
@@ -34,7 +33,7 @@ function Navbar() {
             localStorage.setItem("email", result.user.email);
             setIsAuth(true);
             setUserData([result.user.displayName, result.user.email]);
-            addUser(result.user.displayName, result.user.email, "");
+            AddUser(result.user.displayName, result.user.email, "");
         },
         (error) => {
             setUserData(["Login"]);
@@ -51,20 +50,15 @@ function Navbar() {
         }
     };
 
-    const addUser = async (name, email, password) => {
-        const newUser = User(
-            name,
-            email,
-            password,
-            DefaultCategories,
-        );
-
-        const existingUser = await UserService.getUserByEmail(newUser.email);
-
-        if(existingUser.length == 0){
-            UserService.addUser(newUser);
-        }
-    }
+    const deleteUser = (callback) => {
+        RemoveUser(userData[1]).then(() => {
+            signOut(auth).then(() => {
+                localStorage.clear();
+                setIsAuth(false);
+                setUserData(["Login"]);
+            }, (error) => {});
+        });
+    };
 
     return(
         <Router>
@@ -80,6 +74,7 @@ function Navbar() {
                         <a className="nav-item nav-link" href="#">Charts</a>
                         <a className="nav-item nav-link" href="#">Analytics</a>
                         <a className="nav-item nav-link" href="#" onClick={isAuth ? signOutUser : signInWithGoogle}>{userData[0]}</a>
+                        <a className="nav-item nav-link" href="#" onClick={deleteUser}>Delete User</a>
                     </div>
                 </div>
             </nav>

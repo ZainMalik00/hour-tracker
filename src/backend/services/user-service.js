@@ -1,25 +1,41 @@
 import { db } from "../firebase.js";
-import { collection, query, where, addDoc, getDocs } from "firebase/firestore";
+import { collection, query, where, addDoc, getDocs, deleteDoc, doc } from "firebase/firestore";
 
 const UserService = {
-    //Add User
     addUser: async function(user){
         const docRef = await addDoc(collection(db, "users"), user);
     },
 
-    //Get User By Email
-    getUserByEmail: async function(email){
-        const q = query(collection(db, "users"), where("email", "==", email));
-        const docRef = await getDocs(q);
-        let result = [];
+    removeUser: async function (username){
+        const docRef = await deleteDoc(doc(db, "users", username));
+    },
+
+    getUserIdByEmail: async function(email){
+        const userQuery = query(collection(db, "users"), where("email", "==", email));
+        const docRef = await getDocs(userQuery);
+        let foundUsers = [];
 
         docRef.forEach((doc) => {
             if(doc){
-                result = result.concat(doc.data());
+                foundUsers = foundUsers.concat(doc.id);
             }
         });
 
-        return result;
+        return foundUsers;
+    },
+
+    getUserByEmail: async function(email){
+        const userQuery = query(collection(db, "users"), where("email", "==", email));
+        const docRef = await getDocs(userQuery);
+        let foundUsers = [];
+
+        docRef.forEach((doc) => {
+            if(doc){
+                foundUsers = foundUsers.concat(doc.data());
+            }
+        });
+
+        return foundUsers;
     }
 
 };
