@@ -1,5 +1,5 @@
 export const CategoriesByHour = (
-    name = "",
+    categoryName = "",
     T0000 = 0, T0030 = 0,
     T0100 = 0, T0130 = 0,
     T0200 = 0, T0230 = 0,
@@ -26,7 +26,7 @@ export const CategoriesByHour = (
     T2300 = 0, T2330 = 0
 ) => {
     return { 
-        name: name, 
+        categoryName: categoryName, 
         T0000: T0000, T0030: T0030,
         T0100: T0100, T0130: T0130,
         T0200: T0200, T0230: T0230,
