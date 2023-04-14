@@ -5,7 +5,7 @@ export const User = (
     categories = [],
     daily = [],
     weekly = [],
-    hourly = []
+    categoriesByHour = []
 ) => {
     return { 
         name: name, 
@@ -14,6 +14,6 @@ export const User = (
         categories: categories,
         daily: daily, 
         weekly: weekly,
-        hourly: hourly
+        categoriesByHour: categoriesByHour
     }
 };
