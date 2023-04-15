@@ -8,9 +8,10 @@ import { AddUser } from '../../backend/user-stories/users/add-user/add-user';
 import { AddCategory } from '../../backend/user-stories/categories/add-category/add-category';
 import { RemoveCategory } from '../../backend/user-stories/categories/remove-category/remove-category';
 import { UpdateCategory } from '../../backend/user-stories/categories/update-category/update-category';
-import DailyEntryService from '../../backend/services/daily-entry-service';
-import UserService from '../../backend/services/user-service';
 import { Day } from '../../backend/entities/Day.js';
+import { AddDayEntry } from '../../backend/user-stories/daily/add-daily-entry/add-daily-entry';
+import { RemoveDayEntry } from '../../backend/user-stories/daily/remove-daily-entry/remove-daily-entry';
+import { UpdateDayEntry } from '../../backend/user-stories/daily/update-daily-entry/update-daily-entry';
 
 
 function Navbar() {
@@ -78,19 +79,42 @@ function Navbar() {
         UpdateCategory(userData[1], "NEW", "NEW2");
     };
 
-    const addDay = async () => {
+    const addDay = () => {
         const newDay = Day(
             "JAN 1",
             1,
             "DayOfWeek 1",
             "NEW CATEGORY",
         );
+        AddDayEntry(userData[1], newDay);
+    }
 
-        const existingUser = await UserService.getUserIdByEmail(userData[1]);
+    const removeDay = () => {
+        const oldDay = Day(
+            "JAN 1",
+            1,
+            "DayOfWeek 1",
+            "NEW CATEGORY",
+        );
+        RemoveDayEntry(userData[1], oldDay);
+    };
 
-        if(existingUser.length > 0){
-            DailyEntryService.addDayEntry(existingUser[0], newDay);
-        }
+    const updateDay = () => {
+        const oldDay = Day(
+            "JAN 1",
+            1,
+            "DayOfWeek 1",
+            "NEW CATEGORY",
+        );
+        
+        const newDay = Day(
+            "JAN 2",
+            1,
+            "DayOfWeek 1",
+            "NEW CATEGORY2",
+        );
+
+        UpdateDayEntry(userData[1], oldDay, newDay);
     }
 
     return(
@@ -110,8 +134,10 @@ function Navbar() {
                         {/* <a className="nav-item nav-link" href="#" onClick={deleteUser}>Delete User</a> 
                         <a className="nav-item nav-link" href="#" onClick={addCategory}>Add Category</a>
                         <a className="nav-item nav-link" href="#" onClick={removeCategory}>Remove Category</a>
-                        <a className="nav-item nav-link" href="#" onClick={updateCategory}>Update Category</a> */}
+                        <a className="nav-item nav-link" href="#" onClick={updateCategory}>Update Category</a>
                         <a className="nav-item nav-link" href="#" onClick={addDay}>Add Entry</a>
+                        <a className="nav-item nav-link" href="#" onClick={removeDay}>Remove Entry</a>
+                        <a className="nav-item nav-link" href="#" onClick={updateDay}>Update Entry</a> */}
                     </div>
                 </div>
             </nav>

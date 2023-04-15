@@ -24,11 +24,11 @@ const DailyEntryService = {
         return docRef.data().daily;
     },
 
-    getDay: async function (userID, dateIndex){
-        const docRef = await getDoc(doc(db, "users", userID));
+    // getDay: async function (userID, dateIndex){
+    //     const docRef = await getDoc(doc(db, "users", userID));
         
-        return docRef.data().daily[dateIndex];
-    }
+    //     return docRef.data().daily[dateIndex];
+    // }
 };
 
 export default DailyEntryService;
