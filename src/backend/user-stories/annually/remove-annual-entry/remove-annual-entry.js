@@ -1,7 +1,7 @@
 import UserService from '../../../services/user-service.js';
 import AnnualCategoryEntryService from '../../../services/annual-categeory-entry-service.js';
 
-export const RemoveDayEntry = async (email, annualCategoryEntry) => {
+export const RemoveAnnualCategoryEntry = async (email, annualCategoryEntry) => {
     const existingUserID = await UserService.getUserIdByEmail(email);
     
     if(existingUserID.length > 0){

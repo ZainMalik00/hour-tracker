@@ -12,6 +12,10 @@ import { Day } from '../../backend/entities/Day.js';
 import { AddDayEntry } from '../../backend/user-stories/daily/add-daily-entry/add-daily-entry';
 import { RemoveDayEntry } from '../../backend/user-stories/daily/remove-daily-entry/remove-daily-entry';
 import { UpdateDayEntry } from '../../backend/user-stories/daily/update-daily-entry/update-daily-entry';
+import { AddAnnualCategoryEntry } from '../../backend/user-stories/annually/add-annual-entry/add-annual-entry';
+import { CategoriesByHour } from '../../backend/entities/CategoriesByHour';
+import { RemoveAnnualCategoryEntry } from '../../backend/user-stories/annually/remove-annual-entry/remove-annual-entry';
+import { UpdateAnnualCategoryEntry } from '../../backend/user-stories/annually/update-annual-entry/update-annual-entry';
 
 
 function Navbar() {
@@ -67,55 +71,85 @@ function Navbar() {
     //     });
     // };
 
-    const addCategory = () => {
-        AddCategory(userData[1], "NEW"); 
-    };
+    // const addCategory = () => {
+    //     AddCategory(userData[1], "NEW"); 
+    // };
 
-    const removeCategory = () => {
-        RemoveCategory(userData[1], "NEW");
-    };
+    // const removeCategory = () => {
+    //     RemoveCategory(userData[1], "NEW");
+    // };
 
-    const updateCategory = () => {
-        UpdateCategory(userData[1], "NEW", "NEW2");
-    };
+    // const updateCategory = () => {
+    //     UpdateCategory(userData[1], "NEW", "NEW2");
+    // };
 
-    const addDay = () => {
-        const newDay = Day(
-            "JAN 1",
-            1,
-            "DayOfWeek 1",
-            "NEW CATEGORY",
-        );
-        AddDayEntry(userData[1], newDay);
-    }
+    // const addDay = () => {
+    //     const newDay = Day(
+    //         "JAN 1",
+    //         1,
+    //         "DayOfWeek 1",
+    //         "NEW CATEGORY",
+    //     );
+    //     AddDayEntry(userData[1], newDay);
+    // }
 
-    const removeDay = () => {
-        const oldDay = Day(
-            "JAN 1",
-            1,
-            "DayOfWeek 1",
-            "NEW CATEGORY",
-        );
-        RemoveDayEntry(userData[1], oldDay);
-    };
+    // const removeDay = () => {
+    //     const oldDay = Day(
+    //         "JAN 1",
+    //         1,
+    //         "DayOfWeek 1",
+    //         "NEW CATEGORY",
+    //     );
+    //     RemoveDayEntry(userData[1], oldDay);
+    // };
 
-    const updateDay = () => {
-        const oldDay = Day(
-            "JAN 1",
-            1,
-            "DayOfWeek 1",
-            "NEW CATEGORY",
-        );
+    // const updateDay = () => {
+    //     const oldDay = Day(
+    //         "JAN 1",
+    //         1,
+    //         "DayOfWeek 1",
+    //         "NEW CATEGORY",
+    //     );
         
-        const newDay = Day(
-            "JAN 2",
-            1,
-            "DayOfWeek 1",
-            "NEW CATEGORY2",
-        );
+    //     const newDay = Day(
+    //         "JAN 2",
+    //         1,
+    //         "DayOfWeek 1",
+    //         "NEW CATEGORY2",
+    //     );
 
-        UpdateDayEntry(userData[1], oldDay, newDay);
-    }
+    //     UpdateDayEntry(userData[1], oldDay, newDay);
+    // }
+
+    // const addAnnumEntry = () => {
+    //     const newAnnumEntry = CategoriesByHour(
+    //         "SLEEPING",
+    //         1,
+    //     );
+    //     AddAnnualCategoryEntry(userData[1], newAnnumEntry);
+    // }
+
+    // const removeAnnumEntry = () => {
+    //     const oldAnnumEntry = CategoriesByHour(
+    //         "SLEEPING",
+    //         1,
+    //     );
+    //     RemoveAnnualCategoryEntry(userData[1], oldAnnumEntry);
+    // };
+    
+    // const updateAnnumEntry = () => {
+    //     const newAnnumEntry = CategoriesByHour(
+    //         "SLEEPING",
+    //         21,
+    //     );
+        
+    //     const oldAnnumEntry = CategoriesByHour(
+    //         "SLEEPING",
+    //         1,
+    //     );
+
+    //     UpdateAnnualCategoryEntry(userData[1], oldAnnumEntry, newAnnumEntry);
+    // }
 
     return(
         <Router>
@@ -137,7 +171,10 @@ function Navbar() {
                         <a className="nav-item nav-link" href="#" onClick={updateCategory}>Update Category</a>
                         <a className="nav-item nav-link" href="#" onClick={addDay}>Add Entry</a>
                         <a className="nav-item nav-link" href="#" onClick={removeDay}>Remove Entry</a>
-                        <a className="nav-item nav-link" href="#" onClick={updateDay}>Update Entry</a> */}
+                        <a className="nav-item nav-link" href="#" onClick={updateDay}>Update Entry</a> 
+                        <a className="nav-item nav-link" href="#" onClick={addAnnumEntry}>Add Annum Entry</a>
+                        <a className="nav-item nav-link" href="#" onClick={removeAnnumEntry}>Remove Annum Entry</a>
+                        <a className="nav-item nav-link" href="#" onClick={updateAnnumEntry}>Update Annum Entry</a> */}
                     </div>
                 </div>
             </nav>
