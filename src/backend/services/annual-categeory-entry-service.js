@@ -1,12 +1,12 @@
 import { db } from "../firebase.js";
-import {updateDoc, getDoc, arrayUnion, doc, arrayRemove } from "firebase/firestore";
+import {updateDoc, getDoc, arrayUnion, doc, arrayRemove, increment } from "firebase/firestore";
 
 const AnnualCategoryEntryService = {
     addAnnualCategoryEntry: async function(userID, annualCategoryEntry){
         const ref = doc(db, "users", userID);
 
         await updateDoc(ref, {
-            daily: arrayUnion(annualCategoryEntry)
+            categoriesByHour: arrayUnion(annualCategoryEntry)
         });
     },
 
@@ -14,7 +14,7 @@ const AnnualCategoryEntryService = {
         const ref = doc(db, "users", userID);
         
         await updateDoc(ref, {
-            daily: arrayRemove(annualCategoryEntry)
+            categoriesByHour: arrayRemove(annualCategoryEntry)
         });
     },
 
@@ -22,13 +22,7 @@ const AnnualCategoryEntryService = {
         const docRef = await getDoc(doc(db, "users", userID));
         
         return docRef.data().categoriesByHour;
-    },
-
-    // getDay: async function (userID, dateIndex){
-    //     const docRef = await getDoc(doc(db, "users", userID));
-        
-    //     return docRef.data().daily[dateIndex];
-    // }
+    }
 };
 
 export default AnnualCategoryEntryService;
