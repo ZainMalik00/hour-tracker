@@ -1,3 +1,5 @@
+// WHY DO I NEED THIS?
+
 import { db } from "../firebase.js";
 import {updateDoc, getDoc, arrayUnion, doc, arrayRemove, increment } from "firebase/firestore";
 

@@ -1,12 +1,13 @@
 import { db } from "../firebase.js";
-import {updateDoc, getDoc, arrayUnion, doc, arrayRemove } from "firebase/firestore";
+import {collection, updateDoc, getDoc, arrayUnion, addDoc, doc, arrayRemove } from "firebase/firestore";
 
 const DailyEntryService = {
     addDayEntry: async function(userID, dayEntry){
+        const docRef = await addDoc(collection(db, "days"), dayEntry);
         const ref = doc(db, "users", userID);
 
         await updateDoc(ref, {
-            daily: arrayUnion(dayEntry)
+            days: arrayUnion(docRef.id)
         });
     },
 

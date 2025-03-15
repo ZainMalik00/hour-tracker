@@ -1,3 +1,5 @@
+// WHAT DOES THIS DO??
+
 export const CategoriesByHour = (
     categoryName = "",
     T0000 = 0, T0030 = 0,

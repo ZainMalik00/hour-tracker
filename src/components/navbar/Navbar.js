@@ -35,7 +35,7 @@ function Navbar() {
             setIsAuth(authExists);
         }
 
-      }, []);
+      }, []); 
 
     const signInWithGoogle = () => {
         signInWithPopup(auth, provider).then((result) => {
@@ -84,11 +84,13 @@ function Navbar() {
     // };
 
     // const addDay = () => {
+    //     const dayStamp = new Date("1/1/2025");
     //     const newDay = Day(
-    //         "JAN 1",
-    //         1,
-    //         "DayOfWeek 1",
-    //         "NEW CATEGORY",
+    //         "id",
+    //         dayStamp.toDateString(),
+    //         dayStamp.getWeek(),
+    //         dayStamp.getDay(),
+    //         {T0000:"NEW CATEGORY"},
     //     );
     //     AddDayEntry(userData[1], newDay);
     // }

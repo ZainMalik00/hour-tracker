@@ -3,17 +3,13 @@ export const User = (
     email = "",
     password = "",
     categories = [],
-    daily = {},
-    weekly = [],
-    categoriesByHour = []
+    days = {},
 ) => {
     return { 
         name: name, 
         email: email, 
         password: password, 
         categories: categories,
-        daily: daily, 
-        weekly: weekly,
-        categoriesByHour: categoriesByHour
+        days: days, 
     }
 };
