@@ -1,5 +1,5 @@
-import UserService from '../../../services/user-service.js';
-import CategoryService from '../../../services/category-service.js';
+import UserService from '../../../services/user-service.ts';
+import CategoryService from '../../../services/category-service.ts';
 
 export const AddCategory = async (email, category) => {
     const existingUserID = await UserService.getUserIdByEmail(email);

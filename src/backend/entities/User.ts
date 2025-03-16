@@ -1,8 +1,8 @@
 export const User = (
-    name = "",
-    email = "",
-    password = "",
-    categories = [],
+    name: string = "",
+    email: string = "",
+    password: string = "",
+    categories: string[] = [],
     days = {},
 ) => {
     return { 

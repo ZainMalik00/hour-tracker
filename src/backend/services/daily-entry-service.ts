@@ -1,4 +1,4 @@
-import { db } from "../firebase.js";
+import { db } from "../firebase.ts";
 import {collection, updateDoc, getDoc, arrayUnion, addDoc, doc, arrayRemove } from "firebase/firestore";
 
 const DailyEntryService = {
@@ -20,7 +20,7 @@ const DailyEntryService = {
     },
 
     getDays: async function (userID){
-        const docRef = await getDoc(doc(db, "users", userID));
+        const docRef: any = await getDoc(doc(db, "users", userID));
         
         return docRef.data().daily;
     },

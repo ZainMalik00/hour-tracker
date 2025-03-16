@@ -1,6 +1,6 @@
 // WHY DO I NEED THIS?
 
-import { db } from "../firebase.js";
+import { db } from "../firebase.ts";
 import {updateDoc, getDoc, arrayUnion, doc, arrayRemove, increment } from "firebase/firestore";
 
 const AnnualCategoryEntryService = {
@@ -21,7 +21,7 @@ const AnnualCategoryEntryService = {
     },
 
     getAnnualCategoryEntries: async function (userID){
-        const docRef = await getDoc(doc(db, "users", userID));
+        const docRef: any = await getDoc(doc(db, "users", userID));
         
         return docRef.data().categoriesByHour;
     }

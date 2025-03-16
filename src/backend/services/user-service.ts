@@ -1,4 +1,4 @@
-import { db } from "../firebase.js";
+import { db } from "../firebase.ts";
 import { collection, query, where, addDoc, getDocs, deleteDoc, doc } from "firebase/firestore";
 
 const UserService = {
@@ -15,7 +15,7 @@ const UserService = {
         const docRef = await getDocs(userQuery);
         let foundUsers = [];
 
-        docRef.forEach((doc) => {
+        docRef.forEach((doc: any) => {
             if(doc){
                 foundUsers = foundUsers.concat(doc.id);
             }
@@ -29,7 +29,7 @@ const UserService = {
         const docRef = await getDocs(userQuery);
         let foundUsers = [];
 
-        docRef.forEach((doc) => {
+        docRef.forEach((doc: any) => {
             if(doc){
                 foundUsers = foundUsers.concat(doc.data());
             }

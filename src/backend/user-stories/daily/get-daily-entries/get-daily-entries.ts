@@ -1,5 +1,5 @@
-import UserService from '../../../services/user-service.js';
-import DailyEntryService from '../../../services/daily-entry-service.js';
+import UserService from '../../../services/user-service.ts';
+import DailyEntryService from '../../../services/daily-entry-service.ts';
 
 export const GetCategories = async (email) => {
     const existingUserID = await UserService.getUserIdByEmail(email);

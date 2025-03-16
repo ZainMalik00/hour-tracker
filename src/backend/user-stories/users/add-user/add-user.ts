@@ -1,6 +1,6 @@
-import UserService from '../../../services/user-service.js';
-import { User } from '../../../entities/User.js';
-import { DefaultCategories } from '../../../entities/DefaultCategories';
+import UserService from '../../../services/user-service.ts';
+import { User } from '../../../entities/User.ts';
+import { DefaultCategories } from '../../../entities/DefaultCategories.ts';
 
 export const AddUser = async (name, email, password) => {
     const newUser = User(

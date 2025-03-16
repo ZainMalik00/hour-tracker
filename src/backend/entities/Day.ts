@@ -1,8 +1,8 @@
 export const Day = (
-    userID = "",
-    date = "",
-    week = 0,
-    dayOfWeek = "",
+    userID: string = "",
+    date: string = "",
+    week: Number = 0,
+    dayOfWeek: string = "",
     categoriesPerHalfHour = {}
 ) => {
     return {

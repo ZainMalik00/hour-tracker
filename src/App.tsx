@@ -8,6 +8,7 @@ import ViewTimelineIcon from '@mui/icons-material/ViewTimeline';
 import QueryStatsIcon from '@mui/icons-material/QueryStats';
 import { DashboardLayout } from '@toolpad/core/DashboardLayout';
 import { ReactRouterAppProvider } from '@toolpad/core/react-router';
+import React from 'react';
 
 function App() {
   const NAVIGATION = [
@@ -38,9 +39,7 @@ function App() {
           primary: {
             main: '#52b788',
             light: "#b7e4c7",
-            lighter: "#d8f3dc",
             dark: "#1b4332",
-            darker: "#081c15"
           },
         },
       },
@@ -49,9 +48,7 @@ function App() {
           primary: {
             main: '#52b788',
             light: "#b7e4c7",
-            lighter: "#d8f3dc",
             dark: "#1b4332",
-            darker: "#081c15"
           },
         },
       },

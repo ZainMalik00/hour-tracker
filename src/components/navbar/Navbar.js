@@ -2,18 +2,18 @@ import React, { useState, useEffect } from 'react';
 import './Navbar.css';
 import '../../index.css';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
-import { auth, provider } from '../../backend/firebase.js'
+import { auth, provider } from '../../backend/firebase.ts'
 import { signInWithPopup, signOut } from 'firebase/auth';
 import { AddUser } from '../../backend/user-stories/users/add-user/add-user';
 import { AddCategory } from '../../backend/user-stories/categories/add-category/add-category';
 import { RemoveCategory } from '../../backend/user-stories/categories/remove-category/remove-category';
 import { UpdateCategory } from '../../backend/user-stories/categories/update-category/update-category';
-import { Day } from '../../backend/entities/Day.js';
+import { Day } from '../../backend/entities/Day.ts';
 import { AddDayEntry } from '../../backend/user-stories/daily/add-daily-entry/add-daily-entry';
-import { RemoveDayEntry } from '../../backend/user-stories/daily/remove-daily-entry/remove-daily-entry';
-import { UpdateDayEntry } from '../../backend/user-stories/daily/update-daily-entry/update-daily-entry';
-import { AddAnnualCategoryEntry } from '../../backend/user-stories/annually/add-annual-entry/add-annual-entry';
-import { CategoriesByHour } from '../../backend/entities/CategoriesByHour';
+import { RemoveDayEntry } from '../../backend/user-stories/daily/remove-daily-entry/remove-daily-entry.ts';
+import { UpdateDayEntry } from '../../backend/user-stories/daily/update-daily-entry/update-daily-entry.ts';
+import { AddAnnualCategoryEntry } from '../../backend/user-stories/annually/add-annual-entry/add-annual-entry.ts';
+import { CategoriesByHour } from '../../backend/entities/CategoriesByHour.ts';
 import { RemoveAnnualCategoryEntry } from '../../backend/user-stories/annually/remove-annual-entry/remove-annual-entry';
 import { UpdateAnnualCategoryEntry } from '../../backend/user-stories/annually/update-annual-entry/update-annual-entry';
 

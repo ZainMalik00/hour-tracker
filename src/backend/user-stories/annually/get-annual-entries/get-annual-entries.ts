@@ -1,5 +1,5 @@
-import UserService from '../../../services/user-service.js';
-import AnnualCategoryEntryService from '../../../services/annual-categeory-entry-service.js';
+import UserService from '../../../services/user-service.ts';
+import AnnualCategoryEntryService from '../../../services/annual-categeory-entry-service.ts';
 
 export const GetAnnualCategories = async (email) => {
     const existingUserID = await UserService.getUserIdByEmail(email);

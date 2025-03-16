@@ -1,4 +1,4 @@
-import { db } from "../firebase.js";
+import { db } from "../firebase.ts";
 import {updateDoc, getDoc, arrayUnion, doc, arrayRemove } from "firebase/firestore";
 
 const CategoryService = {
@@ -17,7 +17,7 @@ const CategoryService = {
     },
 
     getCategories: async function (userID){
-        const docRef = await getDoc(doc(db, "users", userID));
+        const docRef: any = await getDoc(doc(db, "users", userID));
         return docRef.data().categories;
     }
 };

@@ -1,4 +1,4 @@
-export const DefaultCategories = [
+export const DefaultCategories: string[] = [
     "Sleep",
     "School",
     "Other Learning",
