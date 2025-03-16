@@ -1,16 +1,16 @@
 import NextAuth from 'next-auth';
-import GithubProvider from 'next-auth/providers/github';
 import CredentialsProvider from 'next-auth/providers/credentials';
+import Google from "next-auth/providers/google"
 
 export const authOptions = {
   providers: [
-    GithubProvider({
-      clientId: process.env.GITHUB_CLIENT_ID ?? '',
-      clientSecret: process.env.GITHUB_CLIENT_SECRET ?? '',
-    }),
+    Google({
+        clientId: process.env.AUTH_GOOGLE_ID ?? '',
+        clientSecret: process.env.AUTH_GOOGLE_SECRET ?? '',
+      }),
     CredentialsProvider({
       // The name to display on the sign in form (e.g. 'Sign in with...')
-      credentials: {
+      credentials: { 
         email: { label: 'Email Address', type: 'email' },
         password: { label: 'Password', type: 'password' },
       },
