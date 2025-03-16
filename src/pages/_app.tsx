@@ -114,6 +114,7 @@ function AppLayout({ children }: { children: React.ReactNode }) {
     <React.Fragment>
       <Head>
         <meta name="viewport" content="initial-scale=1, width=device-width" />
+        <title>Hour Tracker</title>
       </Head>
       <NextAppProvider
         navigation={NAVIGATION}

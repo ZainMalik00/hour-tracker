@@ -8,6 +8,7 @@ export default function Document(props: DocumentProps & DocumentHeadTagsProps) {
       <Head>
         <meta name="emotion-insertion-point" content="" />
         <DocumentHeadTags {...props} />
+        <link rel="shortcut icon" href="/logo.svg" />
       </Head>
       <body>
         <Main />
