@@ -3,14 +3,37 @@ import ReactDOM from 'react-dom/client';
 import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
-import "jquery/dist/jquery.min.js";
-import 'bootstrap/dist/css/bootstrap.min.css';
-import "bootstrap/dist/js/bootstrap.min.js";
+import { createBrowserRouter, RouterProvider } from 'react-router';
+import HourEntryForm from './components/hour-entry-form/hour-entry-form.js';
+
+  const router = createBrowserRouter([
+    {
+      Component: App,
+      children: [
+        {
+          path: '/',
+          Component: HourEntryForm,
+        },
+        {
+          path: '/insert',
+          Component: HourEntryForm,
+        },
+        {
+          path: '/charts',
+          Component: HourEntryForm,
+        },
+        {
+          path: '/analytics',
+          Component: HourEntryForm,
+        },
+      ],
+    },
+  ]);
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <React.StrictMode>
-    <App />
+    <RouterProvider router={router} />
   </React.StrictMode>
 );
 
