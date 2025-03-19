@@ -1,4 +1,4 @@
-import UserService from '../../../services/user-service.ts';
+import UserService from '../../../services/user-service';
 
 export const RemoveUser = async (email) => {
     const existingUser = await UserService.getUserIdByEmail(email);

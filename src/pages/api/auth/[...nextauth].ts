@@ -1,6 +1,10 @@
 import NextAuth from 'next-auth';
+import { FirestoreAdapter } from "@auth/firebase-adapter"
+import { cert } from 'firebase-admin/app';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import Google from "next-auth/providers/google"
+
+const { privateKey } = process.env.AUTH_FIREBASE_PRIVATE_KEY ? JSON.parse(process.env.AUTH_FIREBASE_PRIVATE_KEY): "";
 
 export const authOptions = {
   providers: [
@@ -30,6 +34,13 @@ export const authOptions = {
   pages: {
     signIn: '/auth/signin',
   },
+  adapter: FirestoreAdapter({
+    credential: cert({
+      projectId: process.env.AUTH_FIREBASE_PROJECT_ID,
+      clientEmail: process.env.AUTH_FIREBASE_CLIENT_EMAIL,
+      privateKey: privateKey
+    }),
+  }),
 };
 
 export default NextAuth(authOptions);

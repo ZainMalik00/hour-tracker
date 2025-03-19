@@ -1,15 +1,15 @@
 export const Day = (
-    userID: string = "",
-    date: string = "",
-    week: Number = 0,
-    dayOfWeek: string = "",
-    categoriesPerHalfHour = {}
+    userID: string,
+    date: string,
+    week: Number,
+    dayOfWeek: Number,
+    timeEntries = []
 ) => {
     return {
         userID: userID, 
         date: date, 
         week: week, 
         dayOfWeek: dayOfWeek,
-        categoriesPerHalfHour: categoriesPerHalfHour
+        timeEntries: timeEntries
     }
 };

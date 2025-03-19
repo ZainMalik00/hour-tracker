@@ -1,23 +1,23 @@
-import { db } from "../firebase.ts";
+import { db } from "../firebase";
 import {updateDoc, getDoc, arrayUnion, doc, arrayRemove } from "firebase/firestore";
 
 const CategoryService = {
-    addCategory: async function(userID, category){
-        const ref = doc(db, "users", userID);
+    addCategory: async function(userDataID, category){
+        const ref = doc(db, "usersData", userDataID);
         await updateDoc(ref, {
             categories: arrayUnion(category)
         });
     },
 
-    removeCategory: async function (userID, category){
-        const ref = doc(db, "users", userID);
+    removeCategory: async function (userDataID, category){
+        const ref = doc(db, "usersData", userDataID);
         await updateDoc(ref, {
             categories: arrayRemove(category)
         });
     },
 
-    getCategories: async function (userID){
-        const docRef: any = await getDoc(doc(db, "users", userID));
+    getCategories: async function (userDataID: string){
+        const docRef: any = await getDoc(doc(db, "usersData", userDataID));
         return docRef.data().categories;
     }
 };

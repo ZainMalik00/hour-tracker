@@ -5,7 +5,7 @@ import { useSession } from 'next-auth/react';
 export default function HomePage() {
   const { data: session } = useSession();
 
-  return <Typography>Welcome to the Hour Tracker, {session?.user?.name || 'User'}!</Typography>;
+  return (<Typography>Welcome to the Hour Tracker, {session?.user?.name || 'User'}! </Typography>);
 }
 
 HomePage.requireAuth = true;

@@ -54,7 +54,11 @@ const THEME = createTheme({
           main: '#52b788',
           light: "#b7e4c7",
           dark: "#1b4332",
+          contrastText: "#fff"
         },
+        background: {
+          paper: "#F9FFFA"
+        }
       },
     },
     dark: {
@@ -64,6 +68,9 @@ const THEME = createTheme({
           light: "#b7e4c7",
           dark: "#1b4332",
         },
+        background: {
+          paper: "#000302"
+        }
       },
     },
   },
