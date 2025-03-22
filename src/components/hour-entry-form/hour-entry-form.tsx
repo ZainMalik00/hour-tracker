@@ -16,8 +16,7 @@ import { AddDayEntry } from '../../backend/user-stories/daily/add-daily-entry/ad
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
-dayjs.extend(objectSupport); // Create Custom dayjs objects
-
+dayjs.extend(objectSupport);
 interface TimeEntry {
   category: string,
   time: dayjs.Dayjs,
@@ -146,7 +145,7 @@ const HourEntryForm = () => {
               <InputLabel id="">Timezone</InputLabel>
               <Select
                 name="Timezone"
-                label="Category"
+                label="Timezone"
                 key={index}
                 value={formEntry.timezone}
                 onChange={(event) => {updateTimeEntries(createTimeEntryOnChangeEvent("timezone", event.target.value.toString(), index))}}
