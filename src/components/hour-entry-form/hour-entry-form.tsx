@@ -134,7 +134,7 @@ const HourEntryForm = () => {
           <DatePicker 
             label="Date *"
             value={selectedDate}
-            onChange={(value) => {setSelectedDate}} 
+            onChange={(value) => {setSelectedDate(dayjs.utc(value))}} 
           />
         </LocalizationProvider>
       </FormControl>

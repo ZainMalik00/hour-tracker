@@ -6,7 +6,7 @@ import weekOfYear from 'dayjs/plugin/weekOfYear';
 
 dayjs.extend(weekOfYear);
 
-export const AddDayEntry = async (email: string, date: dayjs.Dayjs, timeEntries) => {
+export const AddDayEntry = async (email: string, selectedDate: dayjs.Dayjs, timeEntries) => {
     const existingUserID = await UserService.getUserIdByEmail(email);
     if(existingUserID.length == 0){ return false; }
 
@@ -17,15 +17,15 @@ export const AddDayEntry = async (email: string, date: dayjs.Dayjs, timeEntries)
 
     const dayEntry = Day(
         userID,
-        date.format("YYYY-MM-DD"),
-        date.week(),
-        date.day(),
+        selectedDate.format("YYYY-MM-DD"),
+        selectedDate.week(),
+        selectedDate.day(),
         timeEntries
     );
-    const existingDayEntry = await DailyEntryService.getDayEntry(userID, date.format("YYYY-MM-DD")).then((result: any) => {return result});
+    const existingDayEntry = await DailyEntryService.getDayEntry(userID, selectedDate.format("YYYY-MM-DD")).then((result: any) => {return result});
     
     if(existingDayEntry){
-        let combinedTimeEntries = combineTimeEntries(timeEntries, existingDayEntry.timeEntries, date.format("YYYY-MM-DD"));
+        let combinedTimeEntries = combineTimeEntries(timeEntries, existingDayEntry.timeEntries, selectedDate.format("YYYY-MM-DD"));
         await DailyEntryService.updateDayEntryTimes(existingDayEntry.id, combinedTimeEntries);
         return true
     } 
