@@ -2,7 +2,7 @@ export const User = (
     name: string = "",
     email: string = "",
     password: string = "",
-    categories: string[] = [],
+    categories: Object[] = [],
     days = {},
 ) => {
     return { 

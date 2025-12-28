@@ -1,6 +1,5 @@
 import UserService from '../../../services/user-service';
 import DailyEntryService from '../../../services/daily-entry-service';
-import { AddUserData } from '../../users/add-user-data/add-user-data';
 import { Day } from '../../../entities/Day';
 import dayjs from 'dayjs';
 import weekOfYear from 'dayjs/plugin/weekOfYear';
@@ -11,20 +10,19 @@ export const AddDayEntry = async (email: string, date: dayjs.Dayjs, timeEntries)
     const existingUserID = await UserService.getUserIdByEmail(email);
     if(existingUserID.length == 0){ return false; }
 
-    const existingUserData = await UserService.getUserDataIdByUserID(existingUserID[0]);
-    if(existingUserData.length == 0){
-        const newUserDataID = await AddUserData(existingUserID[0]);
-        if(!newUserDataID){ return false; }
-    }
+    const userID = existingUserID[0];
+    
+    // Initialize user data if needed (categories, days)
+    await UserService.initializeUserData(userID);
 
     const dayEntry = Day(
-        existingUserID[0],
+        userID,
         date.format("YYYY-MM-DD"),
         date.week(),
         date.day(),
         timeEntries
     );
-    const existingDayEntry = await DailyEntryService.getDayEntry(existingUserID[0], date.format("YYYY-MM-DD")).then((result: any) => {return result});
+    const existingDayEntry = await DailyEntryService.getDayEntry(userID, date.format("YYYY-MM-DD")).then((result: any) => {return result});
     
     if(existingDayEntry){
         let combinedTimeEntries = combineTimeEntries(timeEntries, existingDayEntry.timeEntries, date.format("YYYY-MM-DD"));
@@ -32,7 +30,7 @@ export const AddDayEntry = async (email: string, date: dayjs.Dayjs, timeEntries)
         return true
     } 
 
-    await DailyEntryService.addDayEntry(existingUserData[0], dayEntry);
+    await DailyEntryService.addDayEntry(userID, dayEntry);
     return true
 }
 

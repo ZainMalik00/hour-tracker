@@ -1,5 +1,5 @@
-import UserService from '../../../services/user-service.ts';
-import CategoryService from '../../../services/category-service.ts';
+import UserService from '../../../services/user-service';
+import CategoryService from '../../../services/category-service';
 
 export const RemoveCategory = async (email, category) => {
     const existingUserID = await UserService.getUserIdByEmail(email);

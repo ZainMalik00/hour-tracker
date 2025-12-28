@@ -2,18 +2,18 @@ import { db } from "../firebase";
 import {collection, updateDoc, getDoc, arrayUnion, addDoc, doc, arrayRemove, query, where, getDocs } from "firebase/firestore";
 
 const DailyEntryService = {
-    addDayEntry: async function(userDataID: string, dayEntry){
+    addDayEntry: async function(userID: string, dayEntry){
         const docRef = await addDoc(collection(db, "days"), dayEntry);
-        const ref = doc(db, "usersData", userDataID);
+        const ref = doc(db, "users", userID);
         await updateDoc(ref, {
             days: arrayUnion(docRef.id)
         });
     },
 
-    removeDayEntry: async function (userDataID: string, dayEntry){
-        const ref = doc(db, "users", userDataID);
+    removeDayEntry: async function (userID: string, dayEntry){
+        const ref = doc(db, "users", userID);
         await updateDoc(ref, {
-            daily: arrayRemove(dayEntry)
+            days: arrayRemove(dayEntry)
         });
     },
 

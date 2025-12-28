@@ -1,14 +1,10 @@
 import { db } from "../firebase";
-import { collection, query, where, addDoc, getDocs, deleteDoc, doc } from "firebase/firestore";
+import { collection, query, where, addDoc, getDocs, deleteDoc, doc, getDoc, updateDoc } from "firebase/firestore";
+import { DefaultCategories } from "../entities/DefaultCategories";
 
 const UserService = {
     addUser: async function(user){
         await addDoc(collection(db, "users"), user);
-    },
-
-    addUserData: async function(userData){
-        const docRef = await addDoc(collection(db, "usersData"), userData);
-        return docRef.id
     },
 
     removeUser: async function (username){
@@ -43,18 +39,34 @@ const UserService = {
         return foundUsers;
     },
 
-    getUserDataIdByUserID: async function(userID: string){
-        const userQuery = query(collection(db, "usersData"), where("userID", "==", userID));
-        const docRef = await getDocs(userQuery);
-        let foundUsers = [];
+    getUserById: async function(userID: string){
+        const userRef = doc(db, "users", userID);
+        const userSnap = await getDoc(userRef);
+        if (userSnap.exists()) {
+            return userSnap.data();
+        }
+        return null;
+    },
 
-        docRef.forEach((doc: any) => {
-            if(doc){
-                foundUsers = foundUsers.concat(doc.id);
-            }
-        });
+    initializeUserData: async function(userID: string){
+        const userRef = doc(db, "users", userID);
+        const userSnap = await getDoc(userRef);
+        
+        if (!userSnap.exists()) {
+            return false;
+        }
 
-        return foundUsers;
+        const userData = userSnap.data();
+        
+        // Initialize categories if they don't exist
+        if (!userData.categories || userData.categories.length === 0) {
+            await updateDoc(userRef, {
+                categories: DefaultCategories,
+                days: userData.days || []
+            });
+        }
+        
+        return true;
     },
 
 };

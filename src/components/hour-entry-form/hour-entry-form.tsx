@@ -39,11 +39,15 @@ const HourEntryForm = () => {
       }
     }
     getUserCategories();
-  }, []);
+  }, [userData?.user?.email]);
+
+  const getCategoryValue = (category: any): string => {
+    return typeof category === 'string' ? category : category.name;
+  };
 
   const addTimeEntry = () => {
     const newTimeEntry: TimeEntry = {
-      category: userCategories[0],
+      category: getCategoryValue(userCategories[0]),
       time: dayjs({ hour:0, minute:0 }),
       timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
     }
@@ -83,6 +87,22 @@ const HourEntryForm = () => {
     if(userData?.user?.email){
       AddDayEntry(userData?.user?.email, selectedDate, formattedTimeEntries)
     }
+  }
+
+  const shouldDisableTime = (value, view, pickerIndex) => {
+    timeEntries.map((timeEntry, index) => {
+      if(pickerIndex != index){
+        console.log("date1:")
+        console.log(dayjs.utc(value.toString()))
+        console.log("date2:")
+        console.log(dayjs.utc(timeEntry.time.toString()))
+        console.log(dayjs.utc(value.toString()).isSame(dayjs.utc(timeEntry.time.toString())))
+        if(dayjs.utc(value.toString()).isSame(dayjs.utc(timeEntry.time.toString()))) {
+          return true;
+        }
+      }
+    }); 
+    return false;
   }
 
   // const calculateTimezoneOffset = (timezone: string) => {
@@ -134,6 +154,7 @@ const HourEntryForm = () => {
                 <TimePicker 
                   label="Time *"
                   timezone={formEntry.timezone}
+                  shouldDisableTime={(view, value) => shouldDisableTime(view, value, index)}
                   value={formEntry.time}
                   key={index}
                   onChange={(value)=> {updateTimeEntries(createTimeEntryOnChangeEvent("time", value, index))}}  
@@ -170,8 +191,8 @@ const HourEntryForm = () => {
               >
                 {userCategories.map(function (element, index) {
                     return (
-                      <MenuItem key={index} value={element}>
-                        <ListItemText primary={element} />
+                      <MenuItem key={index} value={element.name}>
+                        <ListItemText primary={element.name} />
                       </MenuItem>
                     );
                   })}
