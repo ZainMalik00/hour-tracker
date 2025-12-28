@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import styles from './hour-entry-form.module.css';
 import { Button, FormControl, FormControlLabel, FormLabel, IconButton, Input, InputLabel, ListItemText, MenuItem, Select } from '@mui/material';
 import { DatePicker, LocalizationProvider, TimePicker } from '@mui/x-date-pickers';
@@ -24,8 +24,10 @@ interface TimeEntry {
   timezone: string
 } 
 
+const TIMEZONES = Intl.supportedValuesOf("timeZone");
+const DEFAULT_TIMEZONE = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
 const HourEntryForm = () => {
-  const timezones = Intl.supportedValuesOf("timeZone");
   const { data: userData } = useSession();
   const [userCategories, setUserCategories] = useState(DefaultCategories);
   const [selectedDate, setSelectedDate] = useState(dayjs());
@@ -42,69 +44,64 @@ const HourEntryForm = () => {
     getUserCategories();
   }, [userData?.user?.email]);
 
-  const getCategoryValue = (category: any): string => {
+  const getCategoryValue = useCallback((category: any): string => {
     return typeof category === 'string' ? category : category.name;
-  };
+  }, []);
 
-  const addTimeEntry = () => {
+  const addTimeEntry = useCallback(() => {
     const newTimeEntry: TimeEntry = {
       category: getCategoryValue(userCategories[0]),
       time: dayjs({ hour:0, minute:0 }),
-      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
+      timezone: DEFAULT_TIMEZONE
     }
-    setTimeEntries([...timeEntries, newTimeEntry]);
-  }
+    setTimeEntries(prev => [...prev, newTimeEntry]);
+  }, [userCategories, getCategoryValue]);
 
-  const removeTimeEntry = (index) => {
-    let newTimeEntries = [...timeEntries];
-    newTimeEntries.splice(index, 1)
-    setTimeEntries(newTimeEntries);
-  }
-
-  const updateTimeEntries = (event) => {
-    const {name, value} = event.target;
-    let newTimeEntries = [...timeEntries];
-    newTimeEntries[value.index] = {...newTimeEntries[value.index], [name]: value.value};
-    setTimeEntries(newTimeEntries);
-  }
-
-  const createTimeEntryOnChangeEvent = (name:string, value: any, index: Number) => {
-    return {target: {name: name, value:{index: index, value:value}}}
-  }
-
-  const submitForm = (event) => {
-    event.preventDefault();
-    let formattedTimeEntries: any = []
-    timeEntries.map((timeEntry) => {
-      formattedTimeEntries = [
-        ...formattedTimeEntries,
-        {
-          category: timeEntry.category,
-          time: timeEntry.time.format('THH:mm:ssZ')
-        }
-      ]
+  const removeTimeEntry = useCallback((index: number) => {
+    setTimeEntries(prev => {
+      const newTimeEntries = [...prev];
+      newTimeEntries.splice(index, 1);
+      return newTimeEntries;
     });
+  }, []);
+
+  const updateTimeEntries = useCallback((event) => {
+    const {name, value} = event.target;
+    setTimeEntries(prev => {
+      const newTimeEntries = [...prev];
+      newTimeEntries[value.index] = {...newTimeEntries[value.index], [name]: value.value};
+      return newTimeEntries;
+    });
+  }, []);
+
+  const createTimeEntryOnChangeEvent = useCallback((name:string, value: any, index: number) => {
+    return {target: {name: name, value:{index: index, value:value}}}
+  }, []);
+
+  const submitForm = useCallback((event: React.FormEvent) => {
+    event.preventDefault();
+    const formattedTimeEntries = timeEntries.map((timeEntry) => ({
+      category: timeEntry.category,
+      time: timeEntry.time.format('THH:mm:ssZ')
+    }));
 
     if(userData?.user?.email){
       AddDayEntry(userData?.user?.email, selectedDate, formattedTimeEntries)
     }
-  }
+  }, [timeEntries, userData?.user?.email, selectedDate]);
 
-  const shouldDisableTime = (value, view, pickerIndex) => {
-    timeEntries.map((timeEntry, index) => {
-      if(pickerIndex != index){
-        console.log("date1:")
-        console.log(dayjs.utc(value.toString()))
-        console.log("date2:")
-        console.log(dayjs.utc(timeEntry.time.toString()))
-        console.log(dayjs.utc(value.toString()).isSame(dayjs.utc(timeEntry.time.toString())))
-        if(dayjs.utc(value.toString()).isSame(dayjs.utc(timeEntry.time.toString()))) {
-          return true;
-        }
-      }
-    }); 
-    return false;
-  }
+  const createShouldDisableTime = useCallback((pickerIndex: number) => {
+    return (value: dayjs.Dayjs | null, view: string) => {
+      // Skip if not checking time view or value is null
+      if (!value || (view !== 'hours' && view !== 'minutes')) return false;
+      
+      // Check if this time is already used by another entry
+      const timeKey = value.format('HH:mm');
+      return timeEntries.some((timeEntry, index) => 
+        pickerIndex !== index && timeEntry.time.format('HH:mm') === timeKey
+      );
+    };
+  }, [timeEntries]);
 
   // const calculateTimezoneOffset = (timezone: string) => {
   //   let offset= new Intl.DateTimeFormat('en',{timeZone:timezone, timeZoneName:'shortOffset'})
@@ -155,9 +152,8 @@ const HourEntryForm = () => {
                 <TimePicker 
                   label="Time *"
                   timezone={formEntry.timezone}
-                  shouldDisableTime={(view, value) => shouldDisableTime(view, value, index)}
+                  shouldDisableTime={createShouldDisableTime(index)}
                   value={formEntry.time}
-                  key={index}
                   onChange={(value)=> {updateTimeEntries(createTimeEntryOnChangeEvent("time", value, index))}}  
                   timeSteps={{ minutes: 30 }} 
                 />
@@ -172,9 +168,9 @@ const HourEntryForm = () => {
                 value={formEntry.timezone}
                 onChange={(event) => {updateTimeEntries(createTimeEntryOnChangeEvent("timezone", event.target.value.toString(), index))}}
               >
-                {timezones.map(function (element, index) {
+                {TIMEZONES.map(function (element, tzIndex) {
                     return (
-                      <MenuItem key={index} value={element}>
+                      <MenuItem key={tzIndex} value={element}>
                         <ListItemText primary={element} />
                       </MenuItem>
                     );
@@ -190,9 +186,9 @@ const HourEntryForm = () => {
                 value={formEntry.category}
                 onChange={(event)=> {updateTimeEntries(createTimeEntryOnChangeEvent("category", event.target.value, index))}}
               >
-                {userCategories.map(function (element, index) {
+                {userCategories.map(function (element, catIndex) {
                     return (
-                      <MenuItem key={index} value={element.name}>
+                      <MenuItem key={catIndex} value={element.name}>
                         <ListItemText primary={element.name} />
                       </MenuItem>
                     );
@@ -208,13 +204,9 @@ const HourEntryForm = () => {
       
       <Button variant="contained" size='large' type='submit' disabled={timeEntries.length == 0}>Submit</Button>
       </form>
-      <DayTimeline selectedDate={selectedDate} userData={userData} userCategories={userCategories}/>
+      <DayTimeline selectedDate={selectedDate} userData={userData || undefined} userCategories={userCategories}/>
     </div>
   )
 };
-
-HourEntryForm.propTypes = {};
-
-HourEntryForm.defaultProps = {};
 
 export default HourEntryForm;
