@@ -13,6 +13,7 @@ import timezone from 'dayjs/plugin/timezone';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import RemoveCircleOutlineIcon from '@mui/icons-material/RemoveCircleOutline';
 import { AddDayEntry } from '../../backend/user-stories/daily/add-daily-entry/add-daily-entry';
+import DayTimeline from '../day-timeline/day-timeline';
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -207,6 +208,7 @@ const HourEntryForm = () => {
       
       <Button variant="contained" size='large' type='submit' disabled={timeEntries.length == 0}>Submit</Button>
       </form>
+      <DayTimeline selectedDate={selectedDate} userData={userData} userCategories={userCategories}/>
     </div>
   )
 };

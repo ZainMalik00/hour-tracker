@@ -74,7 +74,7 @@ const DailyEntryService = {
         });
 
         if(foundDayEntries.length == 0){ return null; }
-        return foundDayEntries[0]
+        return foundDayEntries
     },
 
     updateDayEntryTimes: async function (dayEntryID: string, timeEntries: string[]) {

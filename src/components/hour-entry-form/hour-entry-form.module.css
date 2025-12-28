@@ -1,1 +1,7 @@
-.HourEntryForm {}
+.HourEntryForm {
+    display: flex;
+}
+
+.HourEntryForm form {
+    min-width: 55%;
+}

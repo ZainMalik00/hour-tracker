@@ -1,0 +1,9 @@
+.DayTimeline {
+    width: 100%;
+    display: flex;
+    justify-content: end;
+}
+
+.DayTimeline ul li {
+    min-height: 50px;
+}

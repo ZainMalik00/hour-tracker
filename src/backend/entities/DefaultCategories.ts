@@ -1,4 +1,10 @@
-export const DefaultCategories: Object[] = [
+export interface CategoryEntry {
+  name: string,
+  color: string,
+  description: string
+} 
+
+export const DefaultCategories: CategoryEntry[] = [
     {
         "name" : "Sleep", 
         "color" : "#666666",
