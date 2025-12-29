@@ -49,10 +49,10 @@ const StyledTableCell = styled(TableCell)(({ theme }) => ({
 
 const StyledTableRow = styled(TableRow)(({ theme }) => ({
   '&:nth-of-type(even)': {
-    backgroundColor: theme.palette.background.paper,
+    backgroundColor: theme.vars?.palette?.background?.paper || theme.palette.background.paper,
   },
   '&:hover': {
-    backgroundColor: `${theme.palette.background.paper} !important`,
+    backgroundColor: `${theme.vars?.palette?.background?.paper || theme.palette.background.paper} !important`,
   },
   '&:last-child td, &:last-child th': {
     border: 0,
