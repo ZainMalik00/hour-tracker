@@ -1,7 +1,10 @@
 .DayTimeline {
-    width: 100%;
+    flex: 1 1 45%;
+    min-width: 0;
+    max-width: 100%;
     display: flex;
     justify-content: end;
+    box-sizing: border-box;
 }
 
 .DayTimeline ul li {

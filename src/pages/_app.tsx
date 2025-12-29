@@ -67,6 +67,7 @@ const THEME = createTheme({
           main: '#52b788',
           light: "#b7e4c7",
           dark: "#1b4332",
+          contrastText: "#000"
         },
         background: {
           paper: "#000302"
@@ -100,7 +101,8 @@ const AUTHENTICATION = {
 function getDefaultLayout(page: React.ReactElement<any>) {
   return (
     <DashboardLayout defaultSidebarCollapsed>
-      <PageContainer>{page}</PageContainer>
+      {/* <PageContainer>{page}</PageContainer> */}
+      {page}
     </DashboardLayout>
   );
 }

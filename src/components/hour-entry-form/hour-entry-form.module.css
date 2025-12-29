@@ -1,7 +1,27 @@
 .HourEntryForm {
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+.HourEntryForm .FormContents {
     display: flex;
+    max-width: 100%;
+    box-sizing: border-box;
+    gap: 1rem;
+}
+
+.HourEntryForm .footer {
+    display: flex;
+    justify-content: flex-end;
+    border-top: 1px solid #e0e0e0;
+    padding-top: var(--mui-spacing);
+    padding-bottom: var(--mui-spacing);
+    padding-right: calc( var(--mui-spacing) * 2);
 }
 
 .HourEntryForm form {
-    min-width: 55%;
+    flex: 1 1 55%;
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
 }
