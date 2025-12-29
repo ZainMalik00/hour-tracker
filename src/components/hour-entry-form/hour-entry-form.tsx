@@ -1,6 +1,6 @@
 import React, { useMemo, useCallback, startTransition } from 'react';
 import styles from './hour-entry-form.module.css';
-import { Button, FormControl, IconButton, InputLabel, ListItemText, MenuItem, Select } from '@mui/material';
+import { Button, Card, FormControl, IconButton, ListItemText, MenuItem, Select, styled, Table, TableBody, TableCell, tableCellClasses, TableContainer, TableHead, TableRow } from '@mui/material';
 import { DatePicker, LocalizationProvider, TimePicker } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs'
 import dayjs from 'dayjs';
@@ -36,6 +36,28 @@ const ALL_TIME_SLOTS : Set<string> = (() => {
   }
   return timeSlots;
 })();
+
+const StyledTableCell = styled(TableCell)(({ theme }) => ({
+  [`&.${tableCellClasses.head}`]: {
+    backgroundColor: theme.palette.primary.main,
+    color: theme.palette.common.white,
+  },
+  [`&.${tableCellClasses.body}`]: {
+    fontSize: 14,
+  },
+}));
+
+const StyledTableRow = styled(TableRow)(({ theme }) => ({
+  '&:nth-of-type(even)': {
+    backgroundColor: theme.palette.background.paper,
+  },
+  '&:hover': {
+    backgroundColor: `${theme.palette.background.paper} !important`,
+  },
+  '&:last-child td, &:last-child th': {
+    border: 0,
+  },
+}));
 
 interface HourEntryFormProps {
   selectedDate: dayjs.Dayjs;
@@ -169,6 +191,8 @@ const HourEntryForm = ({
     };
   }, [timeEntries]);
 
+  const skeletonRowCount = Math.max(0, Math.min(4, 4 - timeEntries.length));
+
   // const calculateTimezoneOffset = (timezone: string) => {
   //   let offset= new Intl.DateTimeFormat('en',{timeZone:timezone, timeZoneName:'shortOffset'})
   //     .formatToParts().find(part => part.type==='timeZoneName')!.value.slice(3)
@@ -230,64 +254,145 @@ const HourEntryForm = ({
         >
           Remove All
         </Button>
-        {timeEntries?.map(function (formEntry, index) {
-          return (
-            <div key={index}>
-              <FormControl size="small" required>
-                <LocalizationProvider dateAdapter={AdapterDayjs}>
-                  <TimePicker 
-                    label="Time *"
-                    timezone={formEntry.timezone}
-                    shouldDisableTime={createShouldDisableTime(index)}
-                    value={formEntry.time}
-                    onChange={(value)=> {updateTimeEntries(createTimeEntryOnChangeEvent("time", value, index))}}  
-                    timeSteps={{ minutes: 30 }} 
-                  />
-                </LocalizationProvider>
-              </FormControl>
-              <FormControl size="small">
-                <InputLabel id="">Timezone</InputLabel>
-                <Select
-                  name="Timezone"
-                  label="Timezone"
-                  key={index}
-                  value={formEntry.timezone}
-                  onChange={(event) => {updateTimeEntries(createTimeEntryOnChangeEvent("timezone", event.target.value.toString(), index))}}
-                >
-                  {TIMEZONES.map(function (element, tzIndex) {
-                      return (
-                        <MenuItem key={tzIndex} value={element}>
-                          <ListItemText primary={element} />
-                        </MenuItem>
-                      );
-                    })}
-                </Select>
-              </FormControl>
-              <FormControl size="small" required>
-                <InputLabel>Category</InputLabel>
-                <Select
-                  name="category"
-                  label="Category"
-                  key={index}
-                  value={formEntry.category}
-                  onChange={(event)=> {updateTimeEntries(createTimeEntryOnChangeEvent("category", event.target.value, index))}}
-                >
-                  {userCategories.map(function (element, catIndex) {
-                      return (
-                        <MenuItem key={catIndex} value={element.name}>
-                          <ListItemText primary={element.name} />
-                        </MenuItem>
-                      );
-                    })}
-                </Select>
-              </FormControl>
-              <IconButton aria-label="remove time entry" onClick={() => removeTimeEntry(index)}>
-                <RemoveCircleOutlineIcon color='primary' />
-              </IconButton>
-            </div>
-          );
-        })}
-        
+
+        <Card sx={{backgroundColor: "primary.contrastText"}}>
+          <TableContainer>
+            <Table stickyHeader aria-label="Time Entries Table">
+              <TableHead>
+                <TableRow>
+                  
+                  <StyledTableCell key={"time"} sx={{ maxWidth: '168px', width: '168px' }}>Time</StyledTableCell>
+                  <StyledTableCell key={"timezone"} sx={{ maxWidth: '230px', width: '230px' }}>Timezone</StyledTableCell>
+                  <StyledTableCell key={"category"} sx={{ maxWidth: '196px', width: '196px' }}>Category</StyledTableCell>
+                  <StyledTableCell key={"remove"} sx={{ maxWidth: '72px', width: '72px' }}>Action</StyledTableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {timeEntries?.map(function (formEntry, index) {
+                    return (
+                      <StyledTableRow hover role="checkbox" tabIndex={-1} key={index}>
+                        <StyledTableCell key={"time"} sx={{ maxWidth: '168px', width: '168px' }}>
+                          <FormControl size="small" required>
+                            <LocalizationProvider dateAdapter={AdapterDayjs}>
+                              <TimePicker 
+                                timezone={formEntry.timezone}
+                                shouldDisableTime={createShouldDisableTime(index)}
+                                value={formEntry.time}
+                                onChange={(value)=> {updateTimeEntries(createTimeEntryOnChangeEvent("time", value, index))}}  
+                                timeSteps={{ minutes: 30 }}
+                                sx={{ 
+                                  maxWidth: "132px",
+                                  minWidth: '132px',
+                                  maxHeight: '40px',
+                                  '& .MuiInputBase-root': {
+                                    maxHeight: '40px',
+                                  },
+                                  '& .MuiInputBase-input': {
+                                    maxHeight: '40px',
+                                  }
+                                }} 
+                              />
+                            </LocalizationProvider>
+                          </FormControl>
+                        </StyledTableCell>
+                        <StyledTableCell key={"timezone"} sx={{ maxWidth: '230px', width: '230px' }}>
+                          <FormControl size="small" sx={{ width: '100%', maxWidth: '230px' }}>
+                            <Select
+                              name="Timezone"
+                              key={index}
+                              value={formEntry.timezone}
+                              renderValue={(value) => (
+                                <span style={{ 
+                                  overflow: 'hidden',
+                                  textOverflow: 'ellipsis',
+                                  whiteSpace: 'nowrap',
+                                  display: 'block',
+                                  maxWidth: '200px'
+                                }}>
+                                  {value}
+                                </span>
+                              )}
+                              sx={{ 
+                                width: '100%',
+                                maxWidth: '230px',
+                                '& .MuiSelect-select': {
+                                  overflow: 'hidden',
+                                  textOverflow: 'ellipsis',
+                                  whiteSpace: 'nowrap',
+                                }
+                              }}
+                              onChange={(event) => {updateTimeEntries(createTimeEntryOnChangeEvent("timezone", event.target.value.toString(), index))}}
+                            >
+                              {TIMEZONES.map(function (element, tzIndex) {
+                                  return (
+                                    <MenuItem key={tzIndex} value={element}>
+                                      <ListItemText primary={element} />
+                                    </MenuItem>
+                                  );
+                                })}
+                            </Select>
+                          </FormControl>
+                        </StyledTableCell>
+                        <TableCell key={"category"}>
+                          <FormControl size="small" sx={{ width: '100%', maxWidth: '196px' }} required>
+                            <Select
+                              name="category"
+                              key={index}
+                              value={formEntry.category}
+                              onChange={(event)=> {updateTimeEntries(createTimeEntryOnChangeEvent("category", event.target.value, index))}}
+                              renderValue={(value) => (
+                                <span style={{ 
+                                  overflow: 'hidden',
+                                  textOverflow: 'ellipsis',
+                                  whiteSpace: 'nowrap',
+                                  display: 'block',
+                                  maxWidth: '166px'
+                                }}>
+                                  {value}
+                                </span>
+                              )}
+                              sx={{ 
+                                width: '100%',
+                                maxWidth: '196px',
+                                '& .MuiSelect-select': {
+                                  overflow: 'hidden',
+                                  textOverflow: 'ellipsis',
+                                  whiteSpace: 'nowrap',
+                                }
+                              }}
+                            >
+                              {userCategories.map(function (element, catIndex) {
+                                  return (
+                                    <MenuItem key={catIndex} value={element.name}>
+                                      <ListItemText primary={element.name} />
+                                    </MenuItem>
+                                  );
+                                })}
+                            </Select>
+                          </FormControl>
+                        </TableCell>
+                        <StyledTableCell key={"remove"}>
+                          <IconButton aria-label="remove time entry" onClick={() => removeTimeEntry(index)}>
+                            <RemoveCircleOutlineIcon color='primary' />
+                          </IconButton>
+                        </StyledTableCell>
+                      </StyledTableRow>
+                    );
+                  })}
+                {Array.from({ length: skeletonRowCount }).map((_, skeletonIndex) => (
+                  <StyledTableRow key={`skeleton-${skeletonIndex}`}>
+                    <StyledTableCell sx={{ maxWidth: '168px', width: '168px', height: '73px' }}></StyledTableCell>
+                    <StyledTableCell sx={{ maxWidth: '230px', width: '230px', height: '73px' }}></StyledTableCell>
+                    <TableCell></TableCell>
+                    <StyledTableCell>
+
+                    </StyledTableCell>
+                  </StyledTableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </Card>
         </form>
       </div>
     </div>
