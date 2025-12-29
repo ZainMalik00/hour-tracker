@@ -1,5 +1,5 @@
 import * as React from 'react';
-import HourEntryForm from '../../components/hour-entry-form/hour-entry-form';
+import InsertPageContainer from '../../components/insert-page-container/insert-page-container';
 import { Box, Button } from '@mui/material';
 import { PageContainer } from '@toolpad/core/PageContainer';
 
@@ -12,7 +12,7 @@ export default function InsertPage() {
   return (
     <div>
       <PageContainer>
-        <HourEntryForm onTimeEntriesChange={handleTimeEntriesChange} />
+        <InsertPageContainer onTimeEntriesChange={handleTimeEntriesChange} />
       </PageContainer>
       <Box sx={{ position: 'sticky', bottom: 0, left: 0, right: 0, scrollbarGutter: "auto", backgroundColor: 'primary.contrastText'}}>
         <div style={{ 
