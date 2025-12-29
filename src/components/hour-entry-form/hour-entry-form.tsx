@@ -32,6 +32,7 @@ const HourEntryForm = () => {
   const [userCategories, setUserCategories] = useState(DefaultCategories);
   const [selectedDate, setSelectedDate] = useState(dayjs());
   const [timeEntries, setTimeEntries] = useState<TimeEntry[]>([]);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   useEffect(() => {
     const getUserCategories = async() => {
@@ -78,7 +79,7 @@ const HourEntryForm = () => {
     return {target: {name: name, value:{index: index, value:value}}}
   }, []);
 
-  const submitForm = useCallback((event: React.FormEvent) => {
+  const submitForm = useCallback(async (event: React.FormEvent) => {
     event.preventDefault();
     const formattedTimeEntries = timeEntries.map((timeEntry) => ({
       category: timeEntry.category,
@@ -86,7 +87,11 @@ const HourEntryForm = () => {
     }));
 
     if(userData?.user?.email){
-      AddDayEntry(userData?.user?.email, selectedDate, formattedTimeEntries)
+      const success = await AddDayEntry(userData?.user?.email, selectedDate, formattedTimeEntries);
+      if(success){
+        setTimeEntries([]);
+        setRefreshTrigger(prev => prev + 1);
+      }
     }
   }, [timeEntries, userData?.user?.email, selectedDate]);
 
@@ -132,7 +137,7 @@ const HourEntryForm = () => {
           <DatePicker 
             label="Date *"
             value={selectedDate}
-            onChange={(value) => {setSelectedDate(dayjs.utc(value))}} 
+            onChange={(value) => {if(value){ setSelectedDate(value) }}} 
           />
         </LocalizationProvider>
       </FormControl>
@@ -204,7 +209,7 @@ const HourEntryForm = () => {
       
       <Button variant="contained" size='large' type='submit' disabled={timeEntries.length == 0}>Submit</Button>
       </form>
-      <DayTimeline selectedDate={selectedDate} userData={userData || undefined} userCategories={userCategories}/>
+      <DayTimeline selectedDate={selectedDate} userData={userData || undefined} userCategories={userCategories} selectedTimeEntries={timeEntries} refreshTrigger={refreshTrigger}/>
     </div>
   )
 };

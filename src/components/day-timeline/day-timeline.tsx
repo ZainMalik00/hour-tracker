@@ -6,7 +6,7 @@ import TimelineSeparator from '@mui/lab/TimelineSeparator';
 import TimelineConnector from '@mui/lab/TimelineConnector';
 import TimelineContent, { timelineContentClasses } from '@mui/lab/TimelineContent';
 import TimelineDot from '@mui/lab/TimelineDot';
-import TimelineOppositeContent from '@mui/lab/TimelineOppositeContent';
+import TimelineOppositeContent, { timelineOppositeContentClasses } from '@mui/lab/TimelineOppositeContent';
 import dayjs from 'dayjs';
 import objectSupport from 'dayjs/plugin/objectSupport';
 import { GetDailyEntryTimes } from '../../backend/user-stories/daily/get-daily-entry-times/get-daily-entry-times';
@@ -16,6 +16,13 @@ dayjs.extend(objectSupport);
 interface TimeEntry {
   category: string,
   time: string,
+  type?: string
+} 
+
+interface SelectedTimeEntry {
+  category: string,
+  time: dayjs.Dayjs,
+  timezone: string
 } 
 
 const createDefaultDayTimeEntries = () => {
@@ -43,18 +50,18 @@ interface DayTimelineProps {
     name: string;
     color?: string;
   }>;
+  selectedTimeEntries?: SelectedTimeEntry[] | null;
+  refreshTrigger?: number;
 }
 
 const DayTimeline = React.memo((props: DayTimelineProps) => {
   const [userDayTimeEntries, setUserDayTimeEntries] = useState([{"category": "", "time": ""}]);
 
-  // Memoize category color map for O(1) lookups instead of O(n) find operations
   const categoryColorMap = useMemo(() => {
     if (!props.userCategories) return new Map();
     return new Map(props.userCategories.map(category => [category.name, category.color]));
   }, [props.userCategories]);
 
-  // Memoize sorted entries
   const sortTimeEntriesByTime = useCallback((timeEntries: any) => {
     if(timeEntries.length == 1) { return timeEntries }
     return [...timeEntries].sort((a, b) => {
@@ -62,33 +69,61 @@ const DayTimeline = React.memo((props: DayTimelineProps) => {
     })
   }, []);
 
-  // Memoize format function
   const formatTimeString = useCallback((timeString: string, selectedDate: dayjs.Dayjs) => {
     return dayjs(selectedDate.format("YYYY-MM-DD")+timeString).format("hh:mm A");
   }, []);
 
-  // Optimized color lookup using Map
   const getCategoryColorByName = useCallback((name: string) => {
     return categoryColorMap.get(name);
   }, [categoryColorMap]);
+
+  const convertSelectedTimeEntries = useCallback((selectedTimeEntries: SelectedTimeEntry[]) => {
+    return selectedTimeEntries.map((timeEntry: SelectedTimeEntry) => {
+      return {
+        "category": timeEntry.category,
+        "time": timeEntry.time.format("THH:mm:ssZ"),
+        "type": "selected"
+      }
+    })
+  }, []);
+
+  const CombineTimeEntries = useCallback((timeEntriesO: TimeEntry[], timeEntriesI: TimeEntry[]) => {
+    const overridingEntriesMap = new Map(timeEntriesO.map(entry => [entry.time, entry]));
+    const InitialEntriesSet = new Set(timeEntriesI.map(entry => entry.time));
+    
+    const combined = timeEntriesI.map(timeEntry => 
+      overridingEntriesMap.get(timeEntry.time) ?? timeEntry
+    );
+    
+    combined.push(...timeEntriesO.filter(entry => !InitialEntriesSet.has(entry.time)));
+    
+    return combined;
+  }, []);
 
   useEffect(() => {
       const getUserDayCategories = async() => {
         if(props.selectedDate && props.selectedDate != undefined){
           GetDailyEntryTimes(props.userData?.user?.email, props.selectedDate).then((timeEntries) => {
+            let baseEntries: TimeEntry[] = DEFAULT_DAY_TIME_ENTRIES;
             if(timeEntries){
-              setUserDayTimeEntries(sortTimeEntriesByTime(timeEntries!));
-            } else {
-              console.log(DEFAULT_DAY_TIME_ENTRIES)
-              setUserDayTimeEntries(DEFAULT_DAY_TIME_ENTRIES);
+              const mappedTimeEntries = timeEntries.map((timeEntry) => ({
+                ...timeEntry,
+                type: "existing"
+              }));
+              baseEntries = CombineTimeEntries(mappedTimeEntries, DEFAULT_DAY_TIME_ENTRIES);
             }
+            let finalEntries = baseEntries;
+            if(props.selectedTimeEntries){
+              finalEntries = CombineTimeEntries(convertSelectedTimeEntries(props.selectedTimeEntries)!, baseEntries);
+            }
+            
+            setUserDayTimeEntries(sortTimeEntriesByTime(finalEntries));
           });
         }
       }
       getUserDayCategories();
-    }, [props.selectedDate, props.userData?.user?.email, sortTimeEntriesByTime]);
-
-
+    }, [props.selectedDate, props.userData?.user?.email, props.selectedTimeEntries, props.refreshTrigger, sortTimeEntriesByTime, CombineTimeEntries, convertSelectedTimeEntries]);
+    
   const firstHalfEntries = useMemo(() => 
     userDayTimeEntries.slice(0, userDayTimeEntries.length / 2),
     [userDayTimeEntries]
@@ -99,6 +134,13 @@ const DayTimeline = React.memo((props: DayTimelineProps) => {
     [userDayTimeEntries]
   );
 
+  const determineTimelineDotSX =  useCallback((timeEntry: TimeEntry) => {
+    const existingTimeEntrySX = {backgroundColor: getCategoryColorByName(timeEntry?.category)}
+    const selectedTimeEntrySX = {borderColor: getCategoryColorByName(timeEntry?.category)}
+    if(!timeEntry.type){return existingTimeEntrySX}
+    return (timeEntry.type == "selected" ? selectedTimeEntrySX : existingTimeEntrySX);
+  }, []);
+
   return (
     <div className={styles.DayTimeline}>
       <Timeline
@@ -106,20 +148,25 @@ const DayTimeline = React.memo((props: DayTimelineProps) => {
           [`& .${timelineContentClasses.root}`]: {
             flex: 0.5,
           },
+          [`& .${timelineOppositeContentClasses.root}`]: {
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+            flex: 1,
+            minWidth: 0,
+          },
         }}
       >
-        {firstHalfEntries.map(function(TimeEntry, index, {length}){
+        {firstHalfEntries.map(function(timeEntry: TimeEntry, index, {length}){
           return(
             <div key={index}>
             <TimelineItem>
-              <TimelineOppositeContent>{TimeEntry?.category}</TimelineOppositeContent>
+              <TimelineOppositeContent>{timeEntry.category}</TimelineOppositeContent>
               <TimelineSeparator>
-                <TimelineDot sx={{ 
-                  backgroundColor: getCategoryColorByName(TimeEntry?.category)
-                }} />
+                <TimelineDot sx={determineTimelineDotSX(timeEntry)} />
                 {(index + 1 != length) && <TimelineConnector />}
               </TimelineSeparator>
-              <TimelineContent color="text.secondary">{formatTimeString(TimeEntry?.time, props.selectedDate)}</TimelineContent>
+              <TimelineContent color="text.secondary">{formatTimeString(timeEntry.time, props.selectedDate)}</TimelineContent>
             </TimelineItem>
             </div>
           );
@@ -130,20 +177,25 @@ const DayTimeline = React.memo((props: DayTimelineProps) => {
           [`& .${timelineContentClasses.root}`]: {
             flex: 0.5,
           },
+          [`& .${timelineOppositeContentClasses.root}`]: {
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+            flex: 1,
+            minWidth: 0,
+          },
         }}
       >
-        {secondHalfEntries.map(function(TimeEntry, index, {length}){
+        {secondHalfEntries.map(function(timeEntry: TimeEntry, index, {length}){
           return(
             <div key={userDayTimeEntries.length / 2 + index}>
             <TimelineItem>
-              <TimelineOppositeContent>{TimeEntry?.category}</TimelineOppositeContent>
+              <TimelineOppositeContent>{timeEntry.category}</TimelineOppositeContent>
               <TimelineSeparator>
-                <TimelineDot sx={{ 
-                  backgroundColor: getCategoryColorByName(TimeEntry?.category)
-                }} />
+                <TimelineDot sx={determineTimelineDotSX(timeEntry)} />
                 {(index + 1 != length) && <TimelineConnector />}
               </TimelineSeparator>
-              <TimelineContent color="text.secondary">{formatTimeString(TimeEntry?.time, props.selectedDate)}</TimelineContent>
+              <TimelineContent color="text.secondary">{formatTimeString(timeEntry.time, props.selectedDate)}</TimelineContent>
             </TimelineItem>
             </div>
           );
