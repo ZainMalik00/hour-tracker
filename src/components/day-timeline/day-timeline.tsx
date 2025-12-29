@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import styles from './day-timeline.module.css';
+import { useTheme, useMediaQuery } from '@mui/material';
 import Timeline from '@mui/lab/Timeline';
 import TimelineItem from '@mui/lab/TimelineItem';
 import TimelineSeparator from '@mui/lab/TimelineSeparator';
@@ -55,6 +56,8 @@ interface DayTimelineProps {
 }
 
 const DayTimeline = React.memo((props: DayTimelineProps) => {
+  const theme = useTheme();
+  const isBelowMd = useMediaQuery(theme.breakpoints.down('md'));
   const [userDayTimeEntries, setUserDayTimeEntries] = useState([{"category": "", "time": ""}]);
 
   const categoryColorMap = useMemo(() => {
@@ -142,7 +145,7 @@ const DayTimeline = React.memo((props: DayTimelineProps) => {
   }, []);
 
   return (
-    <div className={styles.DayTimeline}>
+    <div className={`${styles.DayTimeline} ${isBelowMd ? styles.stretch : ''}`}>
       <Timeline
         sx={{
           [`& .${timelineContentClasses.root}`]: {

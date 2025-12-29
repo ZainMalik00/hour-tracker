@@ -5,8 +5,26 @@
     display: flex;
     justify-content: end;
     box-sizing: border-box;
+    gap: 1rem;
+}
+
+.DayTimeline > * {
+    flex: 1 1 0;
+    min-width: 0;
 }
 
 .DayTimeline ul li {
     min-height: 50px;
+}
+
+.DayTimeline.stretch {
+    justify-content: center;
+}
+
+/* .DayTimeline.stretch > * {
+    max-width: 40%;
+} */
+
+.DayTimeline.stretch ul {
+    align-items: stretch;
 }

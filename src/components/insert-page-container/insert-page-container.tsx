@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import styles from './insert-page-container.module.css';
 import { useSession } from 'next-auth/react';
+import { useTheme, useMediaQuery } from '@mui/material';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import objectSupport from 'dayjs/plugin/objectSupport';
@@ -20,6 +21,8 @@ interface InsertPageContainerProps {
 
 const InsertPageContainer = ({ onTimeEntriesChange }: InsertPageContainerProps) => {
   const { data: userData } = useSession();
+  const theme = useTheme();
+  const isBelowMd = useMediaQuery(theme.breakpoints.down('md'));
   const [userCategories, setUserCategories] = useState(DefaultCategories);
   const [selectedDate, setSelectedDate] = useState(dayjs());
   const [timeEntries, setTimeEntries] = useState<TimeEntry[]>([]);
@@ -58,7 +61,7 @@ const InsertPageContainer = ({ onTimeEntriesChange }: InsertPageContainerProps) 
   }, [userData]);
 
   return (
-    <div className={styles.PageContents}>
+    <div className={`${styles.PageContents} ${isBelowMd ? styles.column : ''}`}>
       <HourEntryForm
         selectedDate={selectedDate}
         onSelectedDateChange={setSelectedDate}
