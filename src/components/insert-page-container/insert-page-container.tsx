@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import styles from './insert-page-container.module.css';
 import { useSession } from 'next-auth/react';
-import { useTheme, useMediaQuery } from '@mui/material';
+import { useTheme, useMediaQuery, Card } from '@mui/material';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import objectSupport from 'dayjs/plugin/objectSupport';
@@ -16,15 +16,16 @@ dayjs.extend(timezone);
 dayjs.extend(objectSupport);
 
 interface InsertPageContainerProps {
+  selectedDate: dayjs.Dayjs;
+  onSelectedDateChange: (date: dayjs.Dayjs) => void;
   onTimeEntriesChange?: (length: number) => void;
 }
 
-const InsertPageContainer = ({ onTimeEntriesChange }: InsertPageContainerProps) => {
+const InsertPageContainer = ({ selectedDate, onSelectedDateChange, onTimeEntriesChange }: InsertPageContainerProps) => {
   const { data: userData } = useSession();
   const theme = useTheme();
   const isBelowMd = useMediaQuery(theme.breakpoints.down('md'));
   const [userCategories, setUserCategories] = useState(DefaultCategories);
-  const [selectedDate, setSelectedDate] = useState(dayjs());
   const [timeEntries, setTimeEntries] = useState<TimeEntry[]>([]);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const prevEmailRef = useRef<string | undefined>(userData?.user?.email);
@@ -64,20 +65,22 @@ const InsertPageContainer = ({ onTimeEntriesChange }: InsertPageContainerProps) 
     <div className={`${styles.PageContents} ${isBelowMd ? styles.column : ''}`}>
       <HourEntryForm
         selectedDate={selectedDate}
-        onSelectedDateChange={setSelectedDate}
+        onSelectedDateChange={onSelectedDateChange}
         timeEntries={timeEntries}
         onTimeEntriesChange={handleTimeEntriesChange}
         userCategories={userCategories}
         userData={memoizedUserData}
         onSubmit={handleFormSubmit}
       />
-      <DayTimeline
-        selectedDate={selectedDate}
-        userData={memoizedUserData}
-        userCategories={userCategories}
-        selectedTimeEntries={timeEntries}
-        refreshTrigger={refreshTrigger}
-      />
+      <Card sx={{flex: "1 1 40%", maxHeight: "74vh", overflow: "auto"}}>
+        <DayTimeline
+          selectedDate={selectedDate}
+          userData={memoizedUserData}
+          userCategories={userCategories}
+          selectedTimeEntries={timeEntries}
+          refreshTrigger={refreshTrigger}
+        />
+      </Card>
     </div>
   );
 };

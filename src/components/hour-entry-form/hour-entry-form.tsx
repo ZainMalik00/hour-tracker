@@ -1,7 +1,7 @@
 import React, { useMemo, useCallback, startTransition } from 'react';
 import styles from './hour-entry-form.module.css';
 import { Button, Card, FormControl, IconButton, ListItemText, MenuItem, Select, styled, Table, TableBody, TableCell, tableCellClasses, TableContainer, TableHead, TableRow } from '@mui/material';
-import { DatePicker, LocalizationProvider, TimePicker } from '@mui/x-date-pickers';
+import { LocalizationProvider, TimePicker } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs'
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
@@ -10,6 +10,7 @@ import timezone from 'dayjs/plugin/timezone';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import RemoveCircleOutlineIcon from '@mui/icons-material/RemoveCircleOutline';
 import ControlPointDuplicateIcon from '@mui/icons-material/ControlPointDuplicate';
+import HighlightOffIcon from '@mui/icons-material/HighlightOff';
 import { AddDayEntry } from '../../backend/user-stories/daily/add-daily-entry/add-daily-entry';
 
 dayjs.extend(utc);
@@ -218,45 +219,37 @@ const HourEntryForm = ({
     <div className={styles.HourEntryForm}>
       <div className={styles.FormContents}>
         <form onSubmit={submitForm} id="hour-entry-form">
-        <FormControl size="small" required>
-          <LocalizationProvider dateAdapter={AdapterDayjs}>
-            <DatePicker 
-              label="Date *"
-              value={selectedDate}
-              onChange={(value) => {if(value){ onSelectedDateChange(value) }}} 
-            />
-          </LocalizationProvider>
-        </FormControl>
-        <Button 
-          size='large'
-          variant="outlined" 
-          startIcon={<AddCircleOutlineIcon />} 
-          onClick={addTimeEntry}
-          disabled={numTimeSlots >= MAX_TIME_SLOTS}
-        >
-          Add Time Entry
-        </Button>
-        <Button 
-          size='large'
-          variant="outlined" 
-          startIcon={<ControlPointDuplicateIcon />} 
-          onClick={addRemainingTimeEntries}
-          disabled={numTimeSlots >= MAX_TIME_SLOTS}
-        >
-          {numTimeSlots == 0 ? "Add All" : "Add Remaining"}
-        </Button>
-        <Button 
-          size='large'
-          variant="outlined" 
-          startIcon={<RemoveCircleOutlineIcon />} 
-          onClick={removeAllTimeEntries}
-          disabled={numTimeSlots <= 0}
-        >
-          Remove All
-        </Button>
-
+        <div className={styles.formButtons}>
+          <Button 
+            size='large'
+            variant="outlined" 
+            startIcon={<AddCircleOutlineIcon />} 
+            onClick={addTimeEntry}
+            disabled={numTimeSlots >= MAX_TIME_SLOTS}
+          >
+            Add Entry
+          </Button>
+          <Button 
+            size='large'
+            variant="outlined" 
+            startIcon={<ControlPointDuplicateIcon />} 
+            onClick={addRemainingTimeEntries}
+            disabled={numTimeSlots >= MAX_TIME_SLOTS}
+          >
+            {numTimeSlots == 0 ? "Add All Entries" : "Add Remaining Entries"}
+          </Button>
+          <Button 
+            size='large'
+            variant="outlined" 
+            startIcon={<HighlightOffIcon />} 
+            onClick={removeAllTimeEntries}
+            disabled={numTimeSlots <= 0}
+          >
+            Remove All Entries
+          </Button>
+        </div>
         <Card sx={{backgroundColor: "primary.contrastText"}}>
-          <TableContainer>
+          <TableContainer sx={{ maxHeight: 'calc(68vh - var(--mui-spacing))', overflow: 'auto' }}>
             <Table stickyHeader aria-label="Time Entries Table">
               <TableHead>
                 <TableRow>

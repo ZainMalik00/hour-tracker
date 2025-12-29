@@ -16,3 +16,11 @@
     max-width: 100%;
     box-sizing: border-box;
 }
+
+.HourEntryForm .formButtons {
+    display: flex;
+    box-sizing: border-box;
+    height: 56px;
+    padding-bottom: 14px;
+    gap: 10px;
+}

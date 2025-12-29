@@ -12,6 +12,7 @@ const UserService = {
     },
 
     getUserIdByEmail: async function(email){
+        if (!email) { return []; }
         const userQuery = query(collection(db, "users"), where("email", "==", email));
         const docRef = await getDocs(userQuery);
         let foundUsers = [];
@@ -26,6 +27,7 @@ const UserService = {
     },
 
     getUserByEmail: async function(email){
+        if (!email) { return []; }
         const userQuery = query(collection(db, "users"), where("email", "==", email));
         const docRef = await getDocs(userQuery);
         let foundUsers = [];

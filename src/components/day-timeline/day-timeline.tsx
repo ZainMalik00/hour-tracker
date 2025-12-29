@@ -105,25 +105,39 @@ const DayTimeline = React.memo((props: DayTimelineProps) => {
 
   useEffect(() => {
       const getUserDayCategories = async() => {
-        if(props.selectedDate && props.selectedDate != undefined){
-          GetDailyEntryTimes(props.userData?.user?.email, props.selectedDate).then((timeEntries) => {
-            let baseEntries: TimeEntry[] = DEFAULT_DAY_TIME_ENTRIES;
-            if(timeEntries){
-              const mappedTimeEntries = timeEntries.map((timeEntry) => ({
-                ...timeEntry,
-                type: "existing"
-              }));
-              baseEntries = CombineTimeEntries(mappedTimeEntries, DEFAULT_DAY_TIME_ENTRIES);
-            }
-            let finalEntries = baseEntries;
-            if(props.selectedTimeEntries){
-              finalEntries = CombineTimeEntries(convertSelectedTimeEntries(props.selectedTimeEntries)!, baseEntries);
-            }
-            
-            setUserDayTimeEntries(sortTimeEntriesByTime(finalEntries));
-          });
+        if (!props.selectedDate) return;
+
+        const email = props.userData?.user?.email;
+        
+        // No user signed in - use default entries only
+        if (!email) {
+          const finalEntries = props.selectedTimeEntries
+            ? CombineTimeEntries(convertSelectedTimeEntries(props.selectedTimeEntries)!, DEFAULT_DAY_TIME_ENTRIES)
+            : DEFAULT_DAY_TIME_ENTRIES;
+          setUserDayTimeEntries(sortTimeEntriesByTime(finalEntries));
+          return;
         }
-      }
+
+        // User signed in - fetch existing entries and combine with defaults
+        const timeEntries = await GetDailyEntryTimes(email, props.selectedDate);
+        let baseEntries: TimeEntry[] = DEFAULT_DAY_TIME_ENTRIES;
+        
+        if (timeEntries) {
+          const mappedTimeEntries = timeEntries.map((timeEntry) => ({
+            ...timeEntry,
+            type: "existing"
+          }));
+          baseEntries = CombineTimeEntries(mappedTimeEntries, DEFAULT_DAY_TIME_ENTRIES);
+        }
+
+        // Combine with selected time entries if any
+        const finalEntries = props.selectedTimeEntries
+          ? CombineTimeEntries(convertSelectedTimeEntries(props.selectedTimeEntries)!, baseEntries)
+          : baseEntries;
+        
+        setUserDayTimeEntries(sortTimeEntriesByTime(finalEntries));
+      };
+      
       getUserDayCategories();
     }, [props.selectedDate, props.userData?.user?.email, props.selectedTimeEntries, props.refreshTrigger, sortTimeEntriesByTime, CombineTimeEntries, convertSelectedTimeEntries]);
     

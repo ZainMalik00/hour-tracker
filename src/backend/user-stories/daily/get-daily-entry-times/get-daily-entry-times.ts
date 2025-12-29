@@ -6,6 +6,7 @@ import utc from 'dayjs/plugin/utc';
 dayjs.extend(utc);
 
 export const GetDailyEntryTimes = async (email, selectedDate: dayjs.Dayjs) => {
+    if (!email) { return null; }
     const existingUserID = await UserService.getUserIdByEmail(email);
 
     if(existingUserID.length > 0){
