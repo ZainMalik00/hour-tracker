@@ -6,10 +6,10 @@ import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import objectSupport from 'dayjs/plugin/objectSupport';
 import timezone from 'dayjs/plugin/timezone';
-import { GetCategories } from '../../backend/user-stories/categories/get-categories/get-categories';
-import { DefaultCategories } from '../../backend/entities/DefaultCategories';
-import HourEntryForm, { TimeEntry } from '../hour-entry-form/hour-entry-form';
-import DayTimeline from '../day-timeline/day-timeline';
+import { GetCategories } from '../../../backend/user-stories/categories/get-categories/get-categories';
+import { DefaultCategories } from '../../../backend/entities/DefaultCategories';
+import HourEntryForm, { TimeEntry } from '../../hour-entry-form/hour-entry-form';
+import DayTimeline from '../../day-timeline/day-timeline';
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -72,7 +72,7 @@ const InsertPageContainer = ({ selectedDate, onSelectedDateChange, onTimeEntries
         userData={memoizedUserData}
         onSubmit={handleFormSubmit}
       />
-      <Card sx={{flex: "1 1 40%", maxHeight: "74vh", overflow: "auto"}}>
+      <Card sx={{flex: "1 1 40%", maxHeight: "74vh", overflow: "auto", backgroundColor: "transparent"}}>
         <DayTimeline
           selectedDate={selectedDate}
           userData={memoizedUserData}

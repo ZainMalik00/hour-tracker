@@ -37,7 +37,10 @@ const DailyEntryService = {
 
         docRef.forEach((doc: any) => {
             if(doc){
-                foundDayEntries = foundDayEntries.concat(doc.id);
+                let dayEntry = doc.data()
+                dayEntry["id"] = doc.id
+                const { userID, ...dayEntryNoUserID } = dayEntry;
+                foundDayEntries = foundDayEntries.concat(dayEntryNoUserID);
             }
         });
 

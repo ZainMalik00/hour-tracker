@@ -1,5 +1,5 @@
 import * as React from 'react';
-import InsertPageContainer from '../../components/insert-page-container/insert-page-container';
+import InsertPageContainer from '../../components/page-containers/insert-page-container/insert-page-container';
 import { Box, Button, FormControl, Typography } from '@mui/material';
 import { PageContainer, PageHeader, PageHeaderToolbar } from '@toolpad/core/PageContainer';
 import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers';
