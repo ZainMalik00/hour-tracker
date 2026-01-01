@@ -1,15 +1,18 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import { PageContainer } from '@toolpad/core/PageContainer';
-import { BarChart, barClasses, barElementClasses } from '@mui/x-charts/BarChart';
+import React, { useCallback, useEffect, useState, useMemo } from 'react';
+import { PageContainer, PageHeader, PageHeaderToolbar } from '@toolpad/core/PageContainer';
 import { useSession } from 'next-auth/react';
 import { TimeEntry } from '../../components/hour-entry-form/hour-entry-form';
 import { GetDays } from '../../backend/user-stories/daily/get-daily-entries/get-daily-entries';
-import Typography from '@mui/material/Typography';
-import { Card, Grid, ListItemText, MenuItem, Select, ToggleButton, ToggleButtonGroup } from '@mui/material';
+import { Box, Button, Card, Grid, IconButton } from '@mui/material';
 import { GetCategories } from '../../backend/user-stories/categories/get-categories/get-categories';
 import { DefaultCategories } from '../../backend/entities/DefaultCategories';
-import { LineChart } from '@mui/x-charts';
-
+import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import dayjs from 'dayjs';
+import ChartCard, { ChartConfig } from '../../components/chart-card/chart-card';
+import DesignServicesIcon from '@mui/icons-material/DesignServices';
+import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
+import RemoveCircleOutlineIcon from '@mui/icons-material/RemoveCircleOutline';
 export interface DayEntry {
   date: string;
   dayOfWeek: string;
@@ -22,33 +25,72 @@ export interface WeekEntry {
   timeEntries: TimeEntry[] | null;
 }
 
-export interface ChartConfig {
-  selectedCategory: string;
-  chartSumType: "total" | "average";
-  chartType: "bar" | "line";
-}
+function CustomPageToolbar({ selectedDate, onSelectedDateChange, isEditing, toggleIsEditing }: { selectedDate: dayjs.Dayjs; onSelectedDateChange: (date: dayjs.Dayjs) => void; isEditing: boolean; toggleIsEditing: () => void }) {
 
-// interface BarChartDataEntry {
-//   x: number;
-//   y: number;
-// }
+    return (
+      <PageHeaderToolbar>
+        <Button 
+            size='large'
+            variant="outlined" 
+            startIcon={<DesignServicesIcon />} 
+            sx={{ height: '40px' }}
+            onClick={toggleIsEditing}
+        >
+            Edit
+        </Button>
+        <LocalizationProvider dateAdapter={AdapterDayjs}>
+            <DatePicker 
+                label="Year"
+                views={['year']}
+                value={selectedDate}
+                onChange={(value) => { if(value){ onSelectedDateChange(value) }}} 
+                sx={{ maxWidth: '115px' }}
+                slotProps={{ textField: { size: 'small' } }}
+            />
+        </LocalizationProvider>
+      </PageHeaderToolbar>
+    );
+  }
+  
+  function CustomPageHeader({ status, selectedDate, onSelectedDateChange, isEditing, toggleIsEditing }: { status: string; selectedDate: dayjs.Dayjs; onSelectedDateChange: (date: dayjs.Dayjs) => void; isEditing: boolean; toggleIsEditing: () => void }) {
+    const CustomPageToolbarComponent = React.useCallback(
+      () => <CustomPageToolbar selectedDate={selectedDate} onSelectedDateChange={onSelectedDateChange} isEditing={isEditing} toggleIsEditing={toggleIsEditing} />,
+      [status, selectedDate, onSelectedDateChange, isEditing, toggleIsEditing],
+    );
+  
+    return <PageHeader slots={{ toolbar: CustomPageToolbarComponent }} />;
+  }
 
 export default function ChartsPage() {
     const { data: userData } = useSession();
     const [userCategories, setUserCategories] = useState(DefaultCategories);
     const [dayEntries, setDayEntries] = useState<DayEntry[]>([]);
-    const [weekEntries, setWeekEntries] = useState<any[]>([]);
     const [ numOfCharts, setNumOfCharts ] = useState(4);
     const [chartConfigs, setChartConfigs] = useState<ChartConfig[]>([]);
+    const [selectedDate, setSelectedDate] = useState(dayjs().year());
+    const [isEditing, setIsEditing] = useState(false);
 
-    const getCorrectWeek = (dayEntry: DayEntry) => {
+    const handleSelectedDateChange = React.useCallback((date: dayjs.Dayjs) => {
+        setSelectedDate(date.year());
+    }, []);
+
+    const toggleIsEditing = React.useCallback(() => {
+        setIsEditing(prev => !prev);
+    }, []);
+
+    const CustomPageHeaderComponent = React.useCallback(
+        () => <CustomPageHeader status="" selectedDate={dayjs().year(selectedDate)} onSelectedDateChange={handleSelectedDateChange} isEditing={isEditing} toggleIsEditing={toggleIsEditing} />,
+        [selectedDate, handleSelectedDateChange, isEditing, toggleIsEditing],
+    );
+
+    const getCorrectWeek = useCallback((dayEntry: DayEntry) => {
         const month = dayEntry.date.substring(5, 7);
         if(month === "12" && dayEntry.week === 1 ){ return 53; }
         if(month === "12" && dayEntry.week === 2 ){ return 54; }
         return dayEntry.week;
-    }
+    }, []);
 
-    const createWeekEntries = (dayEntries: DayEntry[]): any[] => {
+    const createWeekEntries = useCallback((dayEntries: DayEntry[], year: number): any[] => {
         // Initialize combinedMap with minimum 52 weeks (always include weeks 1-52)
         const combinedMap: { [key: number]: any } = {};
         for (let week = 1; week <= 52; week++) {
@@ -60,11 +102,13 @@ export default function ChartsPage() {
         
         if (!dayEntries || dayEntries.length === 0) { return Object.values(combinedMap); }
 
-        dayEntries.forEach((dayEntry) => {
+        const yearString = year.toString();
+        const filteredEntries = dayEntries.filter(dayEntry => dayEntry.date.substring(0, 4) === yearString); // substring is the year
+
+        filteredEntries.forEach((dayEntry) => {
             const commonWeek = getCorrectWeek(dayEntry);
             dayEntry.week = commonWeek;
 
-            // Process weeks 1-54 (including 53, 54 which are special cases for December)
             if (commonWeek >= 1 && commonWeek <= 54) {
                 // Add week 53 or 54 to map if not already present
                 if (commonWeek === 53 && !combinedMap[53]) {
@@ -83,17 +127,27 @@ export default function ChartsPage() {
             }
         });
 
-        console.log(Object.values(combinedMap).length);
         return Object.values(combinedMap);
-
-    }
+    }, []);
 
     const sortWeekEntriesByTime = useCallback((weekEntries: WeekEntry[]) => {
         if(weekEntries.length == 1) { return weekEntries }
         return [...weekEntries].sort((a, b) => a.week - b.week)
     }, []);
 
-    const createBarChartData = (category: string, type: "total" | "average", weekEntries: any[]): { xData: number[]; yData: number[] } => {
+    const getTotalTimeEntriesHoursByCategory = useCallback((category: string, weekEntry: WeekEntry): number => {
+        if (!weekEntry.timeEntries) { return 0; }
+        const allTimeEntries = weekEntry.timeEntries.flat();
+        return allTimeEntries.filter((timeEntry: TimeEntry) => timeEntry.category === category).length / 2;
+    }, []);
+
+    const getAverageTimeEntriesHoursByCategory = useCallback((category: string, weekEntry: WeekEntry): number => {
+        if (!weekEntry.timeEntries) { return 0; }
+        const allTimeEntries = weekEntry.timeEntries.flat();
+        return allTimeEntries.filter((timeEntry: TimeEntry) => timeEntry.category === category).length / 14; // 7 days in a week, half hour intervals
+    }, []);
+
+    const createBarChartData = useCallback((category: string, type: "total" | "average", weekEntries: any[]): { xData: number[]; yData: number[] } => {
         const xData: number[] = [];
         const yData: number[] = [];
         weekEntries.forEach((weekEntry) => {
@@ -101,37 +155,41 @@ export default function ChartsPage() {
             yData.push(type === "total" ? getTotalTimeEntriesHoursByCategory(category, weekEntry) : getAverageTimeEntriesHoursByCategory(category, weekEntry));
         })
         return { xData, yData };
-    }
-
-    const getTotalTimeEntriesHoursByCategory = (category: string, weekEntry: WeekEntry): number => {
-        if (!weekEntry.timeEntries) { return 0; }
-        const allTimeEntries = weekEntry.timeEntries.flat();
-        return allTimeEntries.filter((timeEntry: TimeEntry) => timeEntry.category === category).length / 2;
-    }
-
-    const getAverageTimeEntriesHoursByCategory = (category: string, weekEntry: WeekEntry): number => {
-        if (!weekEntry.timeEntries) { return 0; }
-        const allTimeEntries = weekEntry.timeEntries.flat();
-        return allTimeEntries.filter((timeEntry: TimeEntry) => timeEntry.category === category).length / 14; // 7 days in a week, half hour intervals
-    }
+    }, [getTotalTimeEntriesHoursByCategory, getAverageTimeEntriesHoursByCategory]);
     
+    // Fetch categories only once when user email changes
     useEffect(() => {
         if(!userData?.user?.email){ return }
         GetCategories(userData?.user?.email).then((categoryList) => {
                   setUserCategories(categoryList!);
                   if (categoryList && categoryList.length > 0) {
-                      setChartConfigs(Array.from({ length: numOfCharts }, (_, i) => ({
-                          selectedCategory: categoryList[i]?.name || categoryList[0].name,
-                          chartSumType: "total" as const,
-                          chartType: "bar" as const
-                      })));
+                      // Only initialize if chartConfigs is empty (first load)
+                      setChartConfigs(prevConfigs => {
+                          if (prevConfigs.length === 0) {
+                              return Array.from({ length: numOfCharts }, (_, i) => ({
+                                  selectedCategory: categoryList[i]?.name || categoryList[0].name,
+                                  chartSumType: "total" as const,
+                                  chartType: "bar" as const
+                              }));
+                          }
+                          return prevConfigs;
+                      });
                   }
                 });
+    }, [userData?.user?.email]);
+
+    // Fetch days when user email changes (not on date change - we filter client-side)
+    useEffect(() => {
+        if(!userData?.user?.email){ return }
         GetDays(userData?.user?.email).then((daysList) => {
             setDayEntries(daysList!);
-            setWeekEntries(sortWeekEntriesByTime(createWeekEntries(daysList!)))
         });
-    }, [userData?.user?.email, numOfCharts]);
+    }, [userData?.user?.email]);
+
+    const weekEntries = useMemo(() => {
+        const entries = createWeekEntries(dayEntries, selectedDate);
+        return sortWeekEntriesByTime(entries);
+    }, [dayEntries, selectedDate, createWeekEntries, sortWeekEntriesByTime]);
 
 
     const handleCategoryChange = (index: number, value: string) => {
@@ -158,144 +216,107 @@ export default function ChartsPage() {
         setChartConfigs(newChartConfigs);
     }
 
+    const incrementNumOfCharts = () => {
+        setNumOfCharts(prev => prev + 1);
+        setChartConfigs(prevConfigs => {
+            const nextIndex = prevConfigs.length;
+            const defaultCategory = userCategories[nextIndex]?.name || userCategories[0]?.name || '';
+            return [...prevConfigs, {
+                selectedCategory: defaultCategory,
+                chartSumType: "total" as const,
+                chartType: "bar" as const
+            }];
+        });
+    }
+
+    const decrementNumOfCharts = () => {
+        if (numOfCharts <= 1) { return }    
+            setNumOfCharts(prev => prev - 1);
+            setChartConfigs(prevConfigs => {
+                const newConfigs = [...prevConfigs];
+                newConfigs.pop();
+                return newConfigs;
+            });
+
+    }
+
+    const handleRemoveChart = (index: number) => {
+        if (numOfCharts <= 1) { return }
+        const newChartConfigs = [...chartConfigs];
+        newChartConfigs.splice(index, 1);
+        setChartConfigs(newChartConfigs);
+        setNumOfCharts(prev => prev - 1);
+    }
+
   return (
-    <PageContainer>
-        <Grid container size="grow" 
-            rowSpacing={{ xs: 2, sm: 2, md: 3 }} 
-            columnSpacing={{ xs: 2, sm: 2, md: 3 }}
-            sx={{
-                display: "flex",
-                justifyContent: "center"
-            }}
-        >
-            {Array.from({ length: numOfCharts }, (_, i) => {
-                const chartConfig = chartConfigs[i] || {
-                    selectedCategory: userCategories[i]?.name || userCategories[0]?.name || '',
-                    chartSumType: "total" as const,
-                    chartType: "bar" as const
-                };
-                const categoryBarChartData = createBarChartData(chartConfig.selectedCategory, chartConfig.chartSumType, weekEntries);
-                const selectedCategoryColor = userCategories.find((category) => category.name === chartConfig.selectedCategory)?.color || 'primary.main';
-                const chartSumTypeText = chartConfig.chartSumType === "total" ? "Total" : "Average";
-                const chartTypeText = chartConfig.chartType === "bar" ? "Bar Chart" : "Line Chart";
-                return (
-                    <Card
-                    key={i}
-                    style={{
-                        padding: "10px",
-                        minWidth: "400px",
-                        maxWidth: "600px",
-                        height: "385px"
-                    }}>
-                        <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', paddingBottom: '10px' }}>
-                            <div style={{ display: 'flex', gap: 'var(--mui-spacing)' }}>
-                                <Select
-                                    name="chartType"
-                                    key={"chartTypeSelect"+i}
-                                    value={chartConfig.chartType}
-                                    onChange={() => toggleChartType(i)}
-                                    renderValue={(value) => (
-                                        <span style={{ 
-                                        overflow: 'hidden',
-                                        textOverflow: 'ellipsis',
-                                        whiteSpace: 'nowrap',
-                                        display: 'block',
-                                        }}>
-                                        {value === "bar" ? "Bar Chart" : "Line Chart"}
-                                        </span>
-                                    )}
-                                    sx={{ 
-                                        maxHeight: '40px',
-                                        '& .MuiSelect-select': {
-                                        overflow: 'hidden',
-                                        textOverflow: 'ellipsis',
-                                        whiteSpace: 'nowrap',
-                                        }
-                                    }}
-                                >
-                                    <MenuItem value="bar">Bar Chart</MenuItem>
-                                    <MenuItem value="line">Line Chart</MenuItem>
-                                </Select>
-                                <Select
-                                    name="category"
-                                    key={"categorySelect"+i}
-                                    value={chartConfig.selectedCategory}
-                                    onChange={(event)=> {handleCategoryChange(i, event.target.value)}}
-                                    renderValue={(value) => (
-                                        <span style={{ 
-                                        overflow: 'hidden',
-                                        textOverflow: 'ellipsis',
-                                        whiteSpace: 'nowrap',
-                                        display: 'block',
-                                        maxWidth: '120px'
-                                        }}>
-                                        {value}
-                                        </span>
-                                    )}
-                                    sx={{ 
-                                        width: '130%',
-                                        maxWidth: '150px',
-                                        maxHeight: '40px',
-                                        '& .MuiSelect-select': {
-                                        overflow: 'hidden',
-                                        textOverflow: 'ellipsis',
-                                        whiteSpace: 'nowrap',
-                                        }
-                                    }}
-                                >
-                                    {userCategories.map(function (element, catIndex) {
-                                        return (
-                                            <MenuItem key={catIndex} value={element.name}>
-                                            <ListItemText primary={element.name} />
-                                            </MenuItem>
-                                        );
-                                        })}
-                                </Select>
-                            </div>
-                            <ToggleButtonGroup
-                                orientation="vertical"
-                                value={chartConfig.chartSumType}
-                                exclusive
-                                onChange={() => toggleChartSumType(i)}
-                            >
-                                <ToggleButton value="avg" aria-label="Select Chart Type" sx={{ maxHeight: '40px', color: 'primary.main' }}>
-                                    <Typography variant="body1" textAlign="center">{chartSumTypeText === "Total" ? "Average" : "Total"}</Typography>
-                                </ToggleButton>
-                            </ToggleButtonGroup>
-                        </div>
-                        <Typography variant="h6" textAlign="center">{chartSumTypeText} {chartConfig.selectedCategory} Hours by Week</Typography>
-                        { chartTypeText === "Bar Chart" && 
-                            <BarChart
-                                key={i}
-                                xAxis={[{ label: "Weeks", data: categoryBarChartData.xData }]}
-                                yAxis={[{ label: "Hours" }]}
-                                series={[{ label: chartConfig.selectedCategory, data: categoryBarChartData.yData, color: selectedCategoryColor }]}
-                                height={300}
-                                width={480}
-                                hideLegend={true}
-                            />
-                        }
-                        { chartTypeText === "Line Chart" && 
-                            <LineChart
-                                key={i}
-                                xAxis={[{ label: "Weeks", data: categoryBarChartData.xData, scaleType: 'band'}]}
-                                yAxis={[{ label: "Hours" }]}
-                                series={[{ 
-                                    label: chartConfig.selectedCategory, 
-                                    data: categoryBarChartData.yData, 
-                                    color: selectedCategoryColor, 
-                                    showMark: false, 
-                                }]}
-                                
-                                height={300}
-                                width={480}
-                                hideLegend={true}
-                            />
-                        }
-                    </Card>
-                );
-            })}
-        </Grid>
-    </PageContainer>
+    <div>
+        <PageContainer slots={{ header: CustomPageHeaderComponent }} sx={{ minHeight: 'calc(100vh - 128px)' }}>
+            <Grid container size="grow" 
+                rowSpacing={{ xs: 2, sm: 2, md: 3 }} 
+                columnSpacing={{ xs: 2, sm: 2, md: 3 }}
+                sx={{
+                    display: "flex",
+                    justifyContent: "center"
+                }}
+            >
+                {Array.from({ length: numOfCharts }, (_, i) => {
+                    const chartConfig = chartConfigs[i] || {
+                        selectedCategory: userCategories[i]?.name || userCategories[0]?.name || '',
+                        chartSumType: "total" as const,
+                        chartType: "bar" as const
+                    };
+                    return (
+                        <ChartCard
+                            key={i}
+                            index={i}
+                            isEditing={isEditing}
+                            chartConfig={chartConfig}
+                            weekEntries={weekEntries}
+                            userCategories={userCategories}
+                            onCategoryChange={handleCategoryChange}
+                            onToggleChartSumType={toggleChartSumType}
+                            onToggleChartType={toggleChartType}
+                            createBarChartData={createBarChartData}
+                            toggleIsEditing={toggleIsEditing}
+                            handleRemoveChart={handleRemoveChart}   
+                        />
+                    );
+                })}
+                { isEditing && <Card sx={{ height: '385px' }}>
+                    <Button
+                        onClick={incrementNumOfCharts} 
+                        size='large'
+                        variant='outlined' 
+                        sx={{ 
+                            boxSizing: 'border-box', 
+                            minWidth: "460px", 
+                            maxWidth: "600px", 
+                            height: '345px', 
+                            border: '3px solid', 
+                            margin: '20px' 
+                        }}
+                    ><AddCircleOutlineIcon sx={{transform: "scale(2)"}} /></Button>
+                    {/* <IconButton size='large' onClick={decrementNumOfCharts}><RemoveCircleOutlineIcon /></IconButton> */}
+                </Card> }
+            </Grid>
+        </PageContainer>
+        { isEditing && 
+        <Box sx={{ position: 'sticky', bottom: 0, left: 0, right: 0, scrollbarGutter: "auto", backgroundColor: 'primary.contrastText'}}>
+            <div style={{ 
+                display: "flex", 
+                justifyContent: "flex-end",
+                alignItems: "center",
+                gap: "calc( var(--mui-spacing) * 2)",
+                borderTop: "1px solid #e0e0e0",
+                paddingTop: "var(--mui-spacing)",
+                paddingBottom: "var(--mui-spacing)",
+                paddingLeft: "calc( var(--mui-spacing) * 2)",
+                paddingRight: "calc( var(--mui-spacing) * 2)"
+            }}>
+                <Button variant="contained" size='large' type='submit' id="submit-button" onClick={toggleIsEditing}>Done</Button>
+            </div>
+        </Box>
+        }
+    </div>
     );
 }

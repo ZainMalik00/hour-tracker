@@ -1,6 +1,6 @@
 // WHY DO I NEED THIS?
 
-import { db } from "../firebase.ts";
+import { db } from "../firebase";
 import {updateDoc, getDoc, arrayUnion, doc, arrayRemove, increment } from "firebase/firestore";
 
 const AnnualCategoryEntryService = {

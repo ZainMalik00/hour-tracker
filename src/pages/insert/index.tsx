@@ -13,7 +13,7 @@ function CustomPageToolbar({ selectedDate, onSelectedDateChange }: { selectedDat
       <FormControl size="small" required>
         <LocalizationProvider dateAdapter={AdapterDayjs}>
           <DatePicker 
-            label="Date *"
+            label="Date"
             value={selectedDate}
             onChange={(value) => {if(value){ onSelectedDateChange(value) }}} 
             sx={{ width: 220 }}
@@ -56,7 +56,7 @@ export default function InsertPage() {
 
   return (
     <div>
-      <PageContainer slots={{ header: CustomPageHeaderComponent }}>
+      <PageContainer slots={{ header: CustomPageHeaderComponent }} sx={{ minHeight: 'calc(100vh - 128px)' }}>
         <InsertPageContainer 
           selectedDate={selectedDate}
           onSelectedDateChange={handleSelectedDateChange}

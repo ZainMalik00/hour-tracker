@@ -81,8 +81,8 @@ const THEME = createTheme({
       xs: 0,
       sm: 900,
       md: 1500,
-      lg: 1600,
-      xl: 2000,
+      lg: 2000,
+      xl: 3500,
     },
   },
 });
