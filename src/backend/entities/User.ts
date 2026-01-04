@@ -1,15 +1,12 @@
-export const User = (
-    name: string = "",
-    email: string = "",
-    password: string = "",
-    categories: Object[] = [],
-    days = {},
-) => {
-    return { 
-        name: name, 
-        email: email, 
-        password: password, 
-        categories: categories,
-        days: days, 
-    }
-};
+import { ChartConfig } from "./ChartConfig";
+import { CategoryEntry } from "./DefaultCategories";
+import { Day } from "./Day";
+
+export interface User {
+    name: string;
+    email: string;
+    password?: string;
+    categories: CategoryEntry[];
+    days: Day[];
+    chartConfigs?: ChartConfig[];
+}

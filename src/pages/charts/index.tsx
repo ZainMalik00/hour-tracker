@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState, useMemo } from 'react';
+import React, { useCallback, useEffect, useState, useMemo, useRef } from 'react';
 import { PageContainer, PageHeader, PageHeaderToolbar } from '@toolpad/core/PageContainer';
 import { useSession } from 'next-auth/react';
 import { TimeEntry } from '../../components/hour-entry-form/hour-entry-form';
@@ -6,10 +6,13 @@ import { GetDays } from '../../backend/user-stories/daily/get-daily-entries/get-
 import { Box, Button, Card, Grid, IconButton } from '@mui/material';
 import { GetCategories } from '../../backend/user-stories/categories/get-categories/get-categories';
 import { DefaultCategories } from '../../backend/entities/DefaultCategories';
+import { GetChartConfigs } from '../../backend/user-stories/charts/get-chart-configs.ts/get-chart-configs';
+import { UpdateChartConfigs } from '../../backend/user-stories/charts/update-chart-configs/update-chart-configs';
 import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import dayjs from 'dayjs';
-import ChartCard, { ChartConfig } from '../../components/chart-card/chart-card';
+import ChartCard from '../../components/chart-card/chart-card';
+import { ChartConfig } from '../../backend/entities/ChartConfig';
 import DesignServicesIcon from '@mui/icons-material/DesignServices';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import RemoveCircleOutlineIcon from '@mui/icons-material/RemoveCircleOutline';
@@ -69,14 +72,42 @@ export default function ChartsPage() {
     const [chartConfigs, setChartConfigs] = useState<ChartConfig[]>([]);
     const [selectedDate, setSelectedDate] = useState(dayjs().year());
     const [isEditing, setIsEditing] = useState(false);
+    const lastSavedChartConfigsRef = useRef<ChartConfig[]>([]);
 
     const handleSelectedDateChange = React.useCallback((date: dayjs.Dayjs) => {
         setSelectedDate(date.year());
     }, []);
 
-    const toggleIsEditing = React.useCallback(() => {
-        setIsEditing(prev => !prev);
+    const areChartConfigsEqual = useCallback((configs1: ChartConfig[], configs2: ChartConfig[]): boolean => {
+        if (configs1.length !== configs2.length) {
+            return false;
+        }
+        return configs1.every((config1, index) => {
+            const config2 = configs2[index];
+            return config1.selectedCategory === config2.selectedCategory &&
+                   config1.sumType === config2.sumType &&
+                   config1.type === config2.type &&
+                   (config1.index === undefined ? config2.index === undefined : config1.index === config2.index);
+        });
     }, []);
+
+    const updateChartConfigs = React.useCallback(async () => {
+        if (userData?.user?.email) {
+            if (areChartConfigsEqual(chartConfigs, lastSavedChartConfigsRef.current)) { return; }
+
+            try {
+                await UpdateChartConfigs(userData.user.email, chartConfigs);
+                lastSavedChartConfigsRef.current = JSON.parse(JSON.stringify(chartConfigs));
+            } catch (error) {
+                console.error('Error updating chart configs:', error);
+            }
+        }
+    }, [userData?.user?.email, chartConfigs, areChartConfigsEqual]);
+
+    const toggleIsEditing = React.useCallback(async () => {
+        if (isEditing) { await updateChartConfigs(); }
+        setIsEditing(prev => !prev);
+    }, [isEditing, updateChartConfigs]);
 
     const CustomPageHeaderComponent = React.useCallback(
         () => <CustomPageHeader status="" selectedDate={dayjs().year(selectedDate)} onSelectedDateChange={handleSelectedDateChange} isEditing={isEditing} toggleIsEditing={toggleIsEditing} />,
@@ -157,6 +188,25 @@ export default function ChartsPage() {
         return { xData, yData };
     }, [getTotalTimeEntriesHoursByCategory, getAverageTimeEntriesHoursByCategory]);
     
+    const sortChartConfigsByIndex = useCallback((chartConfigs: ChartConfig[]) => {
+        return [...chartConfigs].sort((a, b) => (a.index || 0) - (b.index || 0));
+    }, []);
+
+    // Fetch chartConfigs when user email changes
+    useEffect(() => {
+        if(!userData?.user?.email){ return }
+        GetChartConfigs(userData?.user?.email).then((savedConfigs) => {
+            if (savedConfigs && savedConfigs.length > 0) {
+                const sortedConfigs = sortChartConfigsByIndex(savedConfigs);
+                setChartConfigs(sortedConfigs);
+                setNumOfCharts(savedConfigs.length);
+                lastSavedChartConfigsRef.current = JSON.parse(JSON.stringify(sortedConfigs));
+            }
+        }).catch((error) => {
+            console.error('Error fetching chart configs:', error);
+        });
+    }, [userData?.user?.email, sortChartConfigsByIndex]);
+
     // Fetch categories only once when user email changes
     useEffect(() => {
         if(!userData?.user?.email){ return }
@@ -167,9 +217,10 @@ export default function ChartsPage() {
                       setChartConfigs(prevConfigs => {
                           if (prevConfigs.length === 0) {
                               return Array.from({ length: numOfCharts }, (_, i) => ({
+                                  index: i,
                                   selectedCategory: categoryList[i]?.name || categoryList[0].name,
-                                  chartSumType: "total" as const,
-                                  chartType: "bar" as const
+                                  sumType: "total" as const,
+                                  type: "bar" as const
                               }));
                           }
                           return prevConfigs;
@@ -191,7 +242,6 @@ export default function ChartsPage() {
         return sortWeekEntriesByTime(entries);
     }, [dayEntries, selectedDate, createWeekEntries, sortWeekEntriesByTime]);
 
-
     const handleCategoryChange = (index: number, value: string) => {
         const newChartConfigs = [...chartConfigs];
         newChartConfigs[index] = { ...newChartConfigs[index], selectedCategory: value };
@@ -202,7 +252,7 @@ export default function ChartsPage() {
         const newChartConfigs = [...chartConfigs];
         newChartConfigs[index] = { 
             ...newChartConfigs[index], 
-            chartSumType: newChartConfigs[index].chartSumType === "total" ? "average" : "total" 
+            sumType: newChartConfigs[index].sumType === "total" ? "average" : "total" 
         };
         setChartConfigs(newChartConfigs);
     }
@@ -211,7 +261,7 @@ export default function ChartsPage() {
         const newChartConfigs = [...chartConfigs];
         newChartConfigs[index] = { 
             ...newChartConfigs[index], 
-            chartType: newChartConfigs[index].chartType === "bar" ? "line" : "bar" 
+            type: newChartConfigs[index].type === "bar" ? "line" : "bar" 
         };
         setChartConfigs(newChartConfigs);
     }
@@ -222,9 +272,10 @@ export default function ChartsPage() {
             const nextIndex = prevConfigs.length;
             const defaultCategory = userCategories[nextIndex]?.name || userCategories[0]?.name || '';
             return [...prevConfigs, {
+                index: nextIndex,
                 selectedCategory: defaultCategory,
-                chartSumType: "total" as const,
-                chartType: "bar" as const
+                sumType: "total" as const,
+                type: "bar" as const
             }];
         });
     }
@@ -296,7 +347,6 @@ export default function ChartsPage() {
                             margin: '20px' 
                         }}
                     ><AddCircleOutlineIcon sx={{transform: "scale(2)"}} /></Button>
-                    {/* <IconButton size='large' onClick={decrementNumOfCharts}><RemoveCircleOutlineIcon /></IconButton> */}
                 </Card> }
             </Grid>
         </PageContainer>

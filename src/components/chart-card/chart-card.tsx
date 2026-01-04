@@ -4,12 +4,7 @@ import { BarChart } from '@mui/x-charts/BarChart';
 import { LineChart } from '@mui/x-charts';
 import CloseIcon from '@mui/icons-material/Close';
 import styles from './chart-card.module.css';
-
-export interface ChartConfig {
-  selectedCategory: string;
-  chartSumType: "total" | "average";
-  chartType: "bar" | "line";
-}
+import { ChartConfig } from '../../backend/entities/ChartConfig';
 
 export interface ChartCardProps {
   index: number;
@@ -39,12 +34,12 @@ const ChartCard = React.memo(({
   createBarChartData 
 }: ChartCardProps) => {
   const categoryBarChartData = useMemo(() => 
-    createBarChartData(chartConfig.selectedCategory, chartConfig.chartSumType, weekEntries),
-    [chartConfig.selectedCategory, chartConfig.chartSumType, weekEntries, createBarChartData]
+    createBarChartData(chartConfig.selectedCategory, chartConfig.sumType, weekEntries),
+    [chartConfig.selectedCategory, chartConfig.sumType, weekEntries, createBarChartData]
   );
   const selectedCategoryColor = userCategories.find((category) => category.name === chartConfig.selectedCategory)?.color || 'primary.main';
-  const chartSumTypeText = chartConfig.chartSumType === "total" ? "Total" : "Average";
-  const chartTypeText = chartConfig.chartType === "bar" ? "Bar Chart" : "Line Chart";
+  const chartSumTypeText = chartConfig.sumType === "total" ? "Total" : "Average";
+  const chartTypeText = chartConfig.type === "bar" ? "Bar Chart" : "Line Chart";
 
 
   const handleRemoveChartClick = () => {
@@ -58,7 +53,7 @@ const ChartCard = React.memo(({
           <Select
             name="chartType"
             key={"chartTypeSelect"+index}
-            value={chartConfig.chartType}
+            value={chartConfig.type}
             onChange={() => onToggleChartType(index)}
             renderValue={(value) => (
               <span className={styles.selectValue}>
@@ -111,7 +106,7 @@ const ChartCard = React.memo(({
         
           <ToggleButtonGroup
             orientation="vertical"
-            value={chartConfig.chartSumType}
+            value={chartConfig.sumType}
             exclusive
             onChange={() => onToggleChartSumType(index)}
           >

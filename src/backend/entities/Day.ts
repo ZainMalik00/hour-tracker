@@ -1,15 +1,7 @@
-export const Day = (
-    userID: string,
-    date: string,
-    week: Number,
-    dayOfWeek: Number,
-    timeEntries = []
-) => {
-    return {
-        userID: userID, 
-        date: date, 
-        week: week, 
-        dayOfWeek: dayOfWeek,
-        timeEntries: timeEntries
-    }
-};
+export interface Day {
+    userID: string;
+    date: string;
+    week: number;
+    dayOfWeek: number;
+    timeEntries: any[];
+}

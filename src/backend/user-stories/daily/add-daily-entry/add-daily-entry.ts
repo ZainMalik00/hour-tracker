@@ -21,13 +21,13 @@ export const AddDayEntry = async (email: string, selectedDate: dayjs.Dayjs, time
     // This ensures "January 15th" always means "January 15th" regardless of user's timezone
     const utcDate = dayjs.utc({ year: selectedDate.year(), month: selectedDate.month(), day: selectedDate.date(), hour: 0, minute: 0, second: 0 });
     const dateString = utcDate.format("YYYY-MM-DD");
-    const dayEntry = Day(
-        userID,
-        dateString,
-        utcDate.week(),
-        utcDate.day(),
-        timeEntries
-    );
+    const dayEntry: Day = {
+        userID: userID,
+        date: dateString,
+        week: utcDate.week(),
+        dayOfWeek: utcDate.day(),
+        timeEntries: timeEntries
+    };
     const existingDayEntry = await DailyEntryService.getDayEntry(userID, dateString).then((result: any) => {return result});
     
     if(existingDayEntry){
