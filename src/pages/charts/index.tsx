@@ -15,7 +15,7 @@ import ChartCard from '../../components/chart-card/chart-card';
 import { ChartConfig } from '../../backend/entities/ChartConfig';
 import DesignServicesIcon from '@mui/icons-material/DesignServices';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
-import RemoveCircleOutlineIcon from '@mui/icons-material/RemoveCircleOutline';
+
 export interface DayEntry {
   date: string;
   dayOfWeek: string;
