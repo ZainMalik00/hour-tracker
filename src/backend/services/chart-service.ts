@@ -1,19 +1,23 @@
 import { ChartConfig } from "../entities/ChartConfig";
 import { db } from "../firebase";
-import { collection, query, where, addDoc, getDocs, deleteDoc, doc, getDoc, updateDoc } from "firebase/firestore";
+import { doc, getDoc, updateDoc } from "firebase/firestore";
+
+export type ChartType = "annual" | "weekly";
 
 const ChartService = {
-    updateChartConfigs: async function(userID: string, chartConfigs: ChartConfig[]){
+    updateChartConfigs: async function(userID: string, chartConfigs: ChartConfig[], chartType: ChartType){
         const ref = doc(db, "users", userID);
+        const fieldName = chartType === "annual" ? "chartConfigsAnnual" : "chartConfigsWeekly";
         await updateDoc(ref, {
-            chartConfigs: chartConfigs
+            [fieldName]: chartConfigs
         });
     },
 
-    getChartConfigs: async function(userID: string){
+    getChartConfigs: async function(userID: string, chartType: ChartType){
         const docRef: any = await getDoc(doc(db, "users", userID));
         const userData = docRef.data();
-        return userData ? userData.chartConfigs : null;
+        const fieldName = chartType === "annual" ? "chartConfigsAnnual" : "chartConfigsWeekly";
+        return userData ? userData[fieldName] : null;
     }
  }
 export default ChartService;

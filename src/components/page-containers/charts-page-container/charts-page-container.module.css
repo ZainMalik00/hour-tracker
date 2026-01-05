@@ -1,0 +1,42 @@
+.title {
+  margin-top: var(--mui-spacing);
+  margin-bottom: var(--mui-spacing);
+}
+
+.grid {
+  display: flex;
+  justify-content: center;
+}
+
+.addCard {
+  height: 385px;
+}
+
+.addButton {
+  box-sizing: border-box;
+  min-width: 460px;
+  max-width: 600px;
+  height: 345px;
+  border: 3px solid;
+  margin: 20px;
+}
+
+.addIcon {
+  transform: scale(2);
+}
+
+.accordionContainer {
+  background-color: transparent;
+}
+
+.accordionSummary {
+  background-color: var(--mui-palette-primary-main);
+}
+
+.accordionDetails {
+  background-color: transparent;
+  padding-top: calc(var(--mui-spacing) * 4);
+  padding-bottom: calc(var(--mui-spacing) * 4);
+  padding-left: 0;
+  padding-right: 0;
+}

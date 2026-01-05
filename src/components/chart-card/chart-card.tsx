@@ -5,11 +5,12 @@ import { LineChart } from '@mui/x-charts';
 import CloseIcon from '@mui/icons-material/Close';
 import styles from './chart-card.module.css';
 import { ChartConfig } from '../../backend/entities/ChartConfig';
+import { DayOfWeekEntry, WeekEntry } from '../page-containers/charts-page-container/charts-page-container';
 
 export interface ChartCardProps {
   index: number;
   chartConfig: ChartConfig;
-  weekEntries: any[];
+  entries: WeekEntry[] | DayOfWeekEntry[];
   userCategories: any[];
   isEditing: boolean;
   toggleIsEditing: () => void;
@@ -17,13 +18,13 @@ export interface ChartCardProps {
   onCategoryChange: (index: number, value: string) => void;
   onToggleChartSumType: (index: number) => void;
   onToggleChartType: (index: number) => void;
-  createBarChartData: (category: string, type: "total" | "average", weekEntries: any[]) => { xData: number[]; yData: number[] };
+  createBarChartData: (category: string, type: "total" | "average", weekEntries: any[]) => { xData: (number | string)[]; yData: number[] };
 }
 
 const ChartCard = React.memo(({ 
   index, 
   chartConfig, 
-  weekEntries, 
+  entries, 
   userCategories, 
   isEditing,
   handleRemoveChart,
@@ -34,8 +35,8 @@ const ChartCard = React.memo(({
   createBarChartData 
 }: ChartCardProps) => {
   const categoryBarChartData = useMemo(() => 
-    createBarChartData(chartConfig.selectedCategory, chartConfig.sumType, weekEntries),
-    [chartConfig.selectedCategory, chartConfig.sumType, weekEntries, createBarChartData]
+    createBarChartData(chartConfig.selectedCategory, chartConfig.sumType, entries),
+    [chartConfig.selectedCategory, chartConfig.sumType, entries, createBarChartData]
   );
   const selectedCategoryColor = userCategories.find((category) => category.name === chartConfig.selectedCategory)?.color || 'primary.main';
   const chartSumTypeText = chartConfig.sumType === "total" ? "Total" : "Average";
