@@ -44,7 +44,7 @@ const ChartCard = React.memo(({
   const selectedCategoryColor = userCategories.find((category) => category.name === chartConfig.selectedCategory)?.color || 'primary.main';
   const chartSumTypeText = chartConfig.sumType === "total" ? "Total" : "Average";
   const chartTypeText = chartConfig.type === "bar" ? "Bar Chart" : "Line Chart";
-  const xAxisLabel = chartType === ChartType.DAILY ? "Days" : "Weeks";
+  const xAxisLabel = chartType === ChartType.DAILY ? " by Days" :  chartType === ChartType.WEEKLY ? " by Weeks" : "";  
 
   const handleRemoveChartClick = () => {
     handleRemoveChart(index);
@@ -124,7 +124,7 @@ const ChartCard = React.memo(({
         </IconButton>
       </div> }
       <Typography variant="h6" textAlign="center" className={styles.title}>
-        {chartSumTypeText} {chartConfig.selectedCategory} Hours by {xAxisLabel}
+        {chartSumTypeText} {chartConfig.selectedCategory} Hours {xAxisLabel}
       </Typography>
       { chartTypeText === "Bar Chart" && 
         <BarChart

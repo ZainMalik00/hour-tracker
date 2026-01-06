@@ -348,6 +348,14 @@ export default function ChartsPage() {
         return { xData, yData };
     }, [getTotalTimeEntriesHoursByCategory, getAverageTimeEntriesHoursByCategory]);
     
+    const convertHourToHourName = useCallback((hour: string) => {
+        const hourNum = parseInt(hour.substring(0, 2), 10);
+        const minutes = hour.substring(3); // Extract minutes (skip "HH:")
+        const period = hourNum < 12 ? 'AM' : 'PM';
+        const displayHour = hourNum === 0 ? 12 : (hourNum > 12 ? hourNum - 12 : hourNum);
+        return `${displayHour}:${minutes} ${period}`;
+    }, []);
+    
     const createDayOfWeekEntriesBarChartData = useCallback((category: string, type: "total" | "average", dayOfWeekEntries: DayOfWeekEntry[]): { xData: string[]; yData: number[] } => {
         const xData: string[] = [];
         const yData: number[] = [];
@@ -364,7 +372,7 @@ export default function ChartsPage() {
         const yData: number[] = [];
         if (!hourlyEntries || !Array.isArray(hourlyEntries)) { return { xData, yData }; }
         hourlyEntries.forEach((hourlyEntry) => {
-            xData.push(hourlyEntry.hour);
+            xData.push(convertHourToHourName(hourlyEntry.hour));
             yData.push(type === "total" ? getTotalTimeEntriesHoursByCategory(category, hourlyEntry) : getAverageTimeEntriesHoursByCategory(category, hourlyEntry, ChartType.HOURLY));
         })
         return { xData, yData };
