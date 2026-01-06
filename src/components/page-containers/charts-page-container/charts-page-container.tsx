@@ -5,6 +5,7 @@ import ChartCard from '../../chart-card/chart-card';
 import { ChartConfig } from '../../../backend/entities/ChartConfig';
 import styles from './charts-page-container.module.css';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import { ChartType } from '../../../backend/services/chart-service';
 
 export interface WeekEntry {
   week: number;
@@ -23,6 +24,7 @@ export interface ChartsPageContainerProps {
   entries: WeekEntry[] | DayOfWeekEntry[];
   userCategories: any[];
   title: string;
+  chartType: ChartType;
   onCategoryChange: (index: number, value: string) => void;
   onToggleChartSumType: (index: number) => void;
   onToggleChartType: (index: number) => void;
@@ -39,6 +41,7 @@ const ChartsPageContainer = ({
   entries,
   userCategories,
   title,
+  chartType,
   onCategoryChange,
   onToggleChartSumType,
   onToggleChartType,
@@ -77,6 +80,7 @@ const ChartsPageContainer = ({
                   key={i}
                   index={i}
                   isEditing={isEditing}
+                  chartType={chartType}
                   chartConfig={chartConfig}
                   entries={entries}
                   userCategories={userCategories}

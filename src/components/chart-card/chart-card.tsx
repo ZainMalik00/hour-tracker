@@ -6,6 +6,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import styles from './chart-card.module.css';
 import { ChartConfig } from '../../backend/entities/ChartConfig';
 import { DayOfWeekEntry, WeekEntry } from '../page-containers/charts-page-container/charts-page-container';
+import { ChartType } from '../../backend/services/chart-service';
 
 export interface ChartCardProps {
   index: number;
@@ -13,6 +14,7 @@ export interface ChartCardProps {
   entries: WeekEntry[] | DayOfWeekEntry[];
   userCategories: any[];
   isEditing: boolean;
+  chartType: ChartType;
   toggleIsEditing: () => void;
   handleRemoveChart: (index: number) => void;
   onCategoryChange: (index: number, value: string) => void;
@@ -27,6 +29,7 @@ const ChartCard = React.memo(({
   entries, 
   userCategories, 
   isEditing,
+  chartType,
   handleRemoveChart,
   toggleIsEditing, 
   onCategoryChange, 
@@ -41,7 +44,7 @@ const ChartCard = React.memo(({
   const selectedCategoryColor = userCategories.find((category) => category.name === chartConfig.selectedCategory)?.color || 'primary.main';
   const chartSumTypeText = chartConfig.sumType === "total" ? "Total" : "Average";
   const chartTypeText = chartConfig.type === "bar" ? "Bar Chart" : "Line Chart";
-
+  const xAxisLabel = chartType === ChartType.DAILY ? "Days" : "Weeks";
 
   const handleRemoveChartClick = () => {
     handleRemoveChart(index);
@@ -105,7 +108,7 @@ const ChartCard = React.memo(({
             })}
           </Select>
         
-          <ToggleButtonGroup
+          { chartType !== ChartType.HOURLY && <ToggleButtonGroup
             orientation="vertical"
             value={chartConfig.sumType}
             exclusive
@@ -114,21 +117,22 @@ const ChartCard = React.memo(({
             <ToggleButton value="avg" aria-label="Select Chart Type" sx={{ maxHeight: '40px', color: 'primary.main' }}>
               <Typography variant="body1" textAlign="center">{chartSumTypeText === "Total" ? "Average" : "Total"}</Typography>
             </ToggleButton>
-          </ToggleButtonGroup>
+          </ToggleButtonGroup>}
         </div>
         <IconButton onClick={handleRemoveChartClick}>
           <CloseIcon />
         </IconButton>
       </div> }
       <Typography variant="h6" textAlign="center" className={styles.title}>
-        {chartSumTypeText} {chartConfig.selectedCategory} Hours by Week
+        {chartSumTypeText} {chartConfig.selectedCategory} Hours by {xAxisLabel}
       </Typography>
       { chartTypeText === "Bar Chart" && 
         <BarChart
           key={index}
-          xAxis={[{ label: "Weeks", data: categoryBarChartData.xData }]}
+          xAxis={[{ label: xAxisLabel, data: categoryBarChartData.xData }]}
           yAxis={[{ label: "Hours" }]}
           series={[{ label: chartConfig.selectedCategory, data: categoryBarChartData.yData, color: selectedCategoryColor }]}
+          grid={{ horizontal: true }}
           height={300}
           width={480}
           hideLegend={true}
@@ -137,7 +141,7 @@ const ChartCard = React.memo(({
       { chartTypeText === "Line Chart" && 
         <LineChart
           key={index}
-          xAxis={[{ label: "Weeks", data: categoryBarChartData.xData, scaleType: 'band'}]}
+          xAxis={[{ label: xAxisLabel, data: categoryBarChartData.xData, scaleType: 'band'}]}
           yAxis={[{ label: "Hours" }]}
           series={[{ 
             label: chartConfig.selectedCategory, 

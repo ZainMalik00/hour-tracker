@@ -2,12 +2,16 @@ import { ChartConfig } from "../entities/ChartConfig";
 import { db } from "../firebase";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
 
-export type ChartType = "annual" | "weekly";
+export enum ChartType {
+    WEEKLY = "weekly",
+    DAILY = "daily",
+    HOURLY = "hourly"
+}
 
 const ChartService = {
     updateChartConfigs: async function(userID: string, chartConfigs: ChartConfig[], chartType: ChartType){
         const ref = doc(db, "users", userID);
-        const fieldName = chartType === "annual" ? "chartConfigsAnnual" : "chartConfigsWeekly";
+        const fieldName = chartType === ChartType.WEEKLY ? "chartConfigsWeekly" : chartType === ChartType.DAILY ? "chartConfigsDaily" : "chartConfigsHourly";   
         await updateDoc(ref, {
             [fieldName]: chartConfigs
         });
@@ -16,7 +20,7 @@ const ChartService = {
     getChartConfigs: async function(userID: string, chartType: ChartType){
         const docRef: any = await getDoc(doc(db, "users", userID));
         const userData = docRef.data();
-        const fieldName = chartType === "annual" ? "chartConfigsAnnual" : "chartConfigsWeekly";
+        const fieldName = chartType === ChartType.WEEKLY ? "chartConfigsWeekly" : chartType === ChartType.DAILY ? "chartConfigsDaily" : "chartConfigsHourly";
         return userData ? userData[fieldName] : null;
     }
  }

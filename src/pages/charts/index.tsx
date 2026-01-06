@@ -11,10 +11,13 @@ import { UpdateChartConfigs } from '../../backend/user-stories/charts/update-cha
 import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import dayjs from 'dayjs';
+import isLeapYear from 'dayjs/plugin/isLeapYear';
 import { ChartConfig } from '../../backend/entities/ChartConfig';
 import DesignServicesIcon from '@mui/icons-material/DesignServices';
 import ChartsPageContainer from '../../components/page-containers/charts-page-container/charts-page-container';
+import { ChartType } from '../../backend/services/chart-service';
 
+dayjs.extend(isLeapYear);
 export interface DayEntry {
   date: string;
   dayOfWeek: string;
@@ -70,16 +73,19 @@ function CustomPageToolbar({ selectedDate, onSelectedDateChange, isEditing, togg
 
 export default function ChartsPage() {
     const { data: userData } = useSession();
-    const [userCategories, setUserCategories] = useState(DefaultCategories);
-    const [dayEntries, setDayEntries] = useState<DayEntry[]>([]);
-    const [ numOfAnnualCharts, setNumOfAnnualCharts ] = useState(4);
+    const [ userCategories, setUserCategories ] = useState(DefaultCategories);
+    const [ dayEntries, setDayEntries ] = useState<DayEntry[]>([]);
     const [ numOfWeeklyCharts, setNumOfWeeklyCharts ] = useState(4);
-    const [annualChartConfigs, setAnnualChartConfigs] = useState<ChartConfig[]>([]);
-    const [weeklyChartConfigs, setWeeklyChartConfigs] = useState<ChartConfig[]>([]);
-    const [selectedDate, setSelectedDate] = useState(dayjs().year());
-    const [isEditing, setIsEditing] = useState(false);
-    const lastSavedAnnualChartConfigsRef = useRef<ChartConfig[]>([]);
+    const [ numOfDailyCharts, setNumOfDailyCharts ] = useState(4);
+    const [ numOfHourlyCharts, setNumOfHourlyCharts ] = useState(4);
+    const [ weeklyChartConfigs, setWeeklyChartConfigs ] = useState<ChartConfig[]>([]);
+    const [ dailyChartConfigs, setDailyChartConfigs ] = useState<ChartConfig[]>([]);
+    const [ hourlyChartConfigs, setHourlyChartConfigs ] = useState<ChartConfig[]>([]);
+    const [ selectedDate, setSelectedDate ] = useState(dayjs().year());
+    const [ isEditing, setIsEditing ] = useState(false);
     const lastSavedWeeklyChartConfigsRef = useRef<ChartConfig[]>([]);
+    const lastSavedDailyChartConfigsRef = useRef<ChartConfig[]>([]);
+    const lastSavedHourlyChartConfigsRef = useRef<ChartConfig[]>([]);
 
     const handleSelectedDateChange = React.useCallback((date: dayjs.Dayjs) => {
         setSelectedDate(date.year());
@@ -101,23 +107,28 @@ export default function ChartsPage() {
     const updateChartConfigs = React.useCallback(async () => {
         if(!userData?.user?.email){ return; }
 
+        const isDailyConfigsEqual = areChartConfigsEqual(dailyChartConfigs, lastSavedDailyChartConfigsRef.current);
         const isWeeklyConfigsEqual = areChartConfigsEqual(weeklyChartConfigs, lastSavedWeeklyChartConfigsRef.current);
-        const isAnnualConfigsEqual = areChartConfigsEqual(annualChartConfigs, lastSavedAnnualChartConfigsRef.current);
-        if (isWeeklyConfigsEqual && isAnnualConfigsEqual) { return; }
+        const isHourlyConfigsEqual = areChartConfigsEqual(hourlyChartConfigs, lastSavedHourlyChartConfigsRef.current);
+        if (isDailyConfigsEqual && isWeeklyConfigsEqual && isHourlyConfigsEqual && isHourlyConfigsEqual) { return; }
 
         try {
+            if(!isDailyConfigsEqual) {
+                await UpdateChartConfigs(userData.user.email, dailyChartConfigs, ChartType.DAILY);
+                lastSavedDailyChartConfigsRef.current = JSON.parse(JSON.stringify(dailyChartConfigs));
+            }
             if(!isWeeklyConfigsEqual) {
-                await UpdateChartConfigs(userData.user.email, weeklyChartConfigs, "weekly");
+                await UpdateChartConfigs(userData.user.email, weeklyChartConfigs, ChartType.WEEKLY);
                 lastSavedWeeklyChartConfigsRef.current = JSON.parse(JSON.stringify(weeklyChartConfigs));
             }
-            if(!isAnnualConfigsEqual) {
-                await UpdateChartConfigs(userData.user.email, annualChartConfigs, "annual");
-                lastSavedAnnualChartConfigsRef.current = JSON.parse(JSON.stringify(annualChartConfigs));
+            if(!isHourlyConfigsEqual) {
+                await UpdateChartConfigs(userData.user.email, hourlyChartConfigs, ChartType.HOURLY);
+                lastSavedHourlyChartConfigsRef.current = JSON.parse(JSON.stringify(hourlyChartConfigs));
             }
         } catch (error) {
             console.error('Error updating chart configs:', error);
         }
-    }, [userData?.user?.email, annualChartConfigs, weeklyChartConfigs, areChartConfigsEqual]);
+    }, [userData?.user?.email, weeklyChartConfigs, dailyChartConfigs, hourlyChartConfigs, areChartConfigsEqual]);
 
     const toggleIsEditing = React.useCallback(async () => {
         if (isEditing) { await updateChartConfigs(); }
@@ -196,9 +207,9 @@ export default function ChartsPage() {
             if (entryDayOfWeek >= 0 && entryDayOfWeek <= 6 && dayEntry.timeEntries !== null) {
                 const existingEntries = combinedMap[entryDayOfWeek].timeEntries;
                 if (existingEntries === null) {
-                    combinedMap[entryDayOfWeek].timeEntries = [...dayEntry.timeEntries];
+                    combinedMap[entryDayOfWeek].timeEntries = dayEntry.timeEntries.slice();
                 } else {
-                    combinedMap[entryDayOfWeek].timeEntries = [...existingEntries, ...dayEntry.timeEntries];
+                    combinedMap[entryDayOfWeek].timeEntries = existingEntries.concat(dayEntry.timeEntries);
                 }
             }
         });
@@ -206,22 +217,112 @@ export default function ChartsPage() {
         return Object.values(combinedMap) as DayOfWeekEntry[];
     }, [dayEntries]);
 
+
+    const createHourlyEntries = useCallback((dayEntries: DayEntry[], year: number): any[] => {
+        const yearString = year.toString();
+        const combinedMap: { [key: number]: any } = {};
+        const timeIntervalToIndexMap = new Map<string, number>();
+        
+        for (let hour = 0; hour <= 47; hour+=2) {
+            const hourValue = hour / 2;
+            const hourStr = hourValue < 10 ? "0" + hourValue + ":00" : hourValue + ":00";
+            const halfHourStr = hourValue < 10 ? "0" + hourValue + ":30" : hourValue + ":30";
+            
+            combinedMap[hour] = {
+                hour: hourStr,
+                timeEntries: []
+            };
+            combinedMap[hour + 1] = {
+                hour: halfHourStr,
+                timeEntries: []
+            };
+            timeIntervalToIndexMap.set(hourStr, hour);
+            timeIntervalToIndexMap.set(halfHourStr, hour + 1);
+        }
+
+        if (!dayEntries || dayEntries.length === 0) { return Object.values(combinedMap); }
+
+        const filteredEntries = dayEntries.filter(dayEntry => dayEntry.date.substring(0, 4) === yearString);
+
+        filteredEntries.forEach((dayEntry) => {
+            if (!dayEntry.timeEntries) { return; }
+            
+            dayEntry.timeEntries.forEach((timeEntry: TimeEntry) => {
+                // Handle both string format ("T14:30:00Z") and dayjs object
+                let timeString: string;
+                const timeValue = timeEntry.time as any;
+                if (typeof timeValue === 'string') {
+                    // If it's a string, extract HH:mm from format "THH:mm:ssZ"
+                    timeString = timeValue.substring(1, 6);
+                } else if (timeValue && typeof timeValue.format === 'function') {
+                    // If it's a dayjs object, format it as HH:mm
+                    timeString = timeValue.format('HH:mm');
+                } else { return; }
+                
+                const index = timeIntervalToIndexMap.get(timeString);
+                if (index !== undefined) {
+                    combinedMap[index].timeEntries.push(timeEntry);  
+                }
+            });
+        });
+
+        return Object.values(combinedMap);
+    }, [dayEntries]);
+
     const sortWeekEntriesByTime = useCallback((weekEntries: WeekEntry[]) => {
         if(weekEntries.length == 1) { return weekEntries }
         return [...weekEntries].sort((a, b) => a.week - b.week)
     }, []);
 
-    const getTotalTimeEntriesHoursByCategory = useCallback((category: string, entry: WeekEntry | DayOfWeekEntry): number => {
+    const isSelectedYearLeapYear = useMemo(() => {
+        return dayjs().year(selectedDate).isLeapYear();
+    }, [selectedDate]);
+
+    const getTotalTimeEntriesHoursByCategory = useCallback((category: string, entry: WeekEntry | DayOfWeekEntry | any): number => {
         if (!entry.timeEntries) { return 0; }
-        const allTimeEntries = entry.timeEntries.flat();
-        return allTimeEntries.filter((timeEntry: TimeEntry) => timeEntry.category === category).length / 2;
+        // Handles both nested arrays (WeekEntry) and flat arrays (DayOfWeekEntry, HourlyEntry)
+        let count = 0;
+        const timeEntries = entry.timeEntries;
+        for (let i = 0; i < timeEntries.length; i++) {
+            const timeEntry = timeEntries[i];
+            if (timeEntry === null) { continue; }
+            
+            if (Array.isArray(timeEntry)) {
+                // Nested array case (WeekEntry)
+                for (let j = 0; j < timeEntry.length; j++) {
+                    const nestedTimeEntry = timeEntry[j];
+                    if (nestedTimeEntry && nestedTimeEntry.category === category) { count++; }
+                }
+            } else if (timeEntry && timeEntry.category === category) { count++; } // Flat array case (DayOfWeekEntry, HourlyEntry)
+        }
+        return count / 2;
     }, []);
 
-    const getAverageTimeEntriesHoursByCategory = useCallback((category: string, entry: WeekEntry | DayOfWeekEntry): number => {
+    const getAverageTimeEntriesHoursByCategory = useCallback((category: string, entry: WeekEntry | DayOfWeekEntry | any, chartType: ChartType): number => {
         if (!entry.timeEntries) { return 0; }
-        const allTimeEntries = entry.timeEntries.flat();
-        return allTimeEntries.filter((timeEntry: TimeEntry) => timeEntry.category === category).length / 14; // 7 days in a week, half hour intervals
-    }, []);
+        let totalTimeEntries = 0;
+        if(chartType === ChartType.WEEKLY) {
+            totalTimeEntries = 14;
+        } else if(chartType === ChartType.DAILY) {
+            totalTimeEntries = isSelectedYearLeapYear ? 366 : 365;
+        }
+        // Handles both nested arrays (WeekEntry) and flat arrays (DayOfWeekEntry, HourlyEntry)
+        let count = 0;
+        const timeEntries = entry.timeEntries;
+        for (let i = 0; i < timeEntries.length; i++) {
+            const timeEntry = timeEntries[i];
+            if (timeEntry === null) { continue; }      
+            
+            if (Array.isArray(timeEntry)) {
+                // Nested array case (WeekEntry)
+                for (let j = 0; j < timeEntry.length; j++) {
+                    const nestedTimeEntry = timeEntry[j];
+                    if (nestedTimeEntry && nestedTimeEntry.category === category) { count++; }
+                }
+            } else if (timeEntry && timeEntry.category === category) { count++; } // Flat array case (DayOfWeekEntry, HourlyEntry)
+        }
+        return count / totalTimeEntries;
+    }, [isSelectedYearLeapYear]);
 
     const convertDayOfWeekToDayOfWeekName = useCallback((dayOfWeek: number) => {
         switch(dayOfWeek) {
@@ -242,21 +343,32 @@ export default function ChartsPage() {
         if (!weekEntries || !Array.isArray(weekEntries)) { return { xData, yData }; }
         weekEntries.forEach((weekEntry) => {
             xData.push(weekEntry.week);
-            yData.push(type === "total" ? getTotalTimeEntriesHoursByCategory(category, weekEntry) : getAverageTimeEntriesHoursByCategory(category, weekEntry));
+            yData.push(type === "total" ? getTotalTimeEntriesHoursByCategory(category, weekEntry) : getAverageTimeEntriesHoursByCategory(category, weekEntry, ChartType.WEEKLY));
         })
         return { xData, yData };
     }, [getTotalTimeEntriesHoursByCategory, getAverageTimeEntriesHoursByCategory]);
     
-    const createDayOfWeekEntriesBarChartData = useCallback((category: string, type: "total" | "average", dayOfWeekEntries: DayOfWeekEntry[]): { xData: (number | string)[]; yData: number[] } => {
-        const xData: (number | string)[] = [];
+    const createDayOfWeekEntriesBarChartData = useCallback((category: string, type: "total" | "average", dayOfWeekEntries: DayOfWeekEntry[]): { xData: string[]; yData: number[] } => {
+        const xData: string[] = [];
         const yData: number[] = [];
         if (!dayOfWeekEntries || !Array.isArray(dayOfWeekEntries)) { return { xData, yData }; }
         dayOfWeekEntries.forEach((dayOfWeekEntry) => {
             xData.push(convertDayOfWeekToDayOfWeekName(dayOfWeekEntry.dayOfWeek as number));
-            yData.push(type === "total" ? getTotalTimeEntriesHoursByCategory(category, dayOfWeekEntry) : getAverageTimeEntriesHoursByCategory(category, dayOfWeekEntry));
+            yData.push(type === "total" ? getTotalTimeEntriesHoursByCategory(category, dayOfWeekEntry) : getAverageTimeEntriesHoursByCategory(category, dayOfWeekEntry, ChartType.DAILY));
         })
         return { xData, yData };
     }, [getTotalTimeEntriesHoursByCategory, getAverageTimeEntriesHoursByCategory, convertDayOfWeekToDayOfWeekName]);    
+
+    const createHourlyEntriesBarChartData = useCallback((category: string, type: "total" | "average", hourlyEntries: any[]): { xData: string[]; yData: number[] } => {
+        const xData: string[] = [];
+        const yData: number[] = [];
+        if (!hourlyEntries || !Array.isArray(hourlyEntries)) { return { xData, yData }; }
+        hourlyEntries.forEach((hourlyEntry) => {
+            xData.push(hourlyEntry.hour);
+            yData.push(type === "total" ? getTotalTimeEntriesHoursByCategory(category, hourlyEntry) : getAverageTimeEntriesHoursByCategory(category, hourlyEntry, ChartType.HOURLY));
+        })
+        return { xData, yData };
+    }, [getTotalTimeEntriesHoursByCategory, getAverageTimeEntriesHoursByCategory]);
 
     const sortChartConfigsByIndex = useCallback((chartConfigs: ChartConfig[]) => {
         return [...chartConfigs].sort((a, b) => (a.index || 0) - (b.index || 0));
@@ -266,18 +378,7 @@ export default function ChartsPage() {
     useEffect(() => {
         if(!userData?.user?.email){ return }
         
-        GetChartConfigs(userData?.user?.email, "annual").then((savedConfigs) => {
-            if (savedConfigs && savedConfigs.length > 0) {
-                const sortedConfigs = sortChartConfigsByIndex(savedConfigs);
-                setAnnualChartConfigs(sortedConfigs);
-                setNumOfAnnualCharts(savedConfigs.length);
-                lastSavedAnnualChartConfigsRef.current = JSON.parse(JSON.stringify(sortedConfigs));
-            }
-        }).catch((error) => {
-            console.error('Error fetching annual chart configs:', error);
-        });
-        
-        GetChartConfigs(userData?.user?.email, "weekly").then((savedConfigs) => {
+        GetChartConfigs(userData?.user?.email, ChartType.WEEKLY).then((savedConfigs) => {
             if (savedConfigs && savedConfigs.length > 0) {
                 const sortedConfigs = sortChartConfigsByIndex(savedConfigs);
                 setWeeklyChartConfigs(sortedConfigs);
@@ -286,6 +387,27 @@ export default function ChartsPage() {
             }
         }).catch((error) => {
             console.error('Error fetching weekly chart configs:', error);
+        });
+        
+        GetChartConfigs(userData?.user?.email, ChartType.DAILY).then((savedConfigs) => {
+            if (savedConfigs && savedConfigs.length > 0) {
+                const sortedConfigs = sortChartConfigsByIndex(savedConfigs);
+                setDailyChartConfigs(sortedConfigs);
+                setNumOfDailyCharts(savedConfigs.length);
+                lastSavedDailyChartConfigsRef.current = JSON.parse(JSON.stringify(sortedConfigs));
+            }
+        }).catch((error) => {
+            console.error('Error fetching daily chart configs:', error);
+        });
+        GetChartConfigs(userData?.user?.email, ChartType.HOURLY).then((savedConfigs) => {
+            if (savedConfigs && savedConfigs.length > 0) {
+                const sortedConfigs = sortChartConfigsByIndex(savedConfigs);
+                setHourlyChartConfigs(sortedConfigs);
+                setNumOfHourlyCharts(savedConfigs.length);
+                lastSavedHourlyChartConfigsRef.current = JSON.parse(JSON.stringify(sortedConfigs));
+            }
+        }).catch((error) => {
+            console.error('Error fetching hourly chart configs:', error);
         });
     }, [userData?.user?.email, sortChartConfigsByIndex]);
 
@@ -296,17 +418,6 @@ export default function ChartsPage() {
                   setUserCategories(categoryList!);
                   if (categoryList && categoryList.length > 0) {
                       // Only initialize if chartConfigs is empty (first load)
-                      setAnnualChartConfigs(prevConfigs => {
-                          if (prevConfigs.length === 0) {
-                              return Array.from({ length: numOfAnnualCharts }, (_, i) => ({
-                                  index: i,
-                                  selectedCategory: categoryList[i]?.name || categoryList[0].name,
-                                  sumType: "total" as const,
-                                  type: "bar" as const
-                              }));
-                          }
-                          return prevConfigs;
-                      });
                       setWeeklyChartConfigs(prevConfigs => {
                           if (prevConfigs.length === 0) {
                               return Array.from({ length: numOfWeeklyCharts }, (_, i) => ({
@@ -318,9 +429,31 @@ export default function ChartsPage() {
                           }
                           return prevConfigs;
                       });
+                      setDailyChartConfigs(prevConfigs => {
+                          if (prevConfigs.length === 0) {
+                              return Array.from({ length: numOfDailyCharts }, (_, i) => ({
+                                  index: i,
+                                  selectedCategory: categoryList[i]?.name || categoryList[0].name,
+                                  sumType: "total" as const,
+                                  type: "bar" as const
+                              }));
+                          }
+                          return prevConfigs;
+                      });
+                      setHourlyChartConfigs(prevConfigs => {
+                          if (prevConfigs.length === 0) {
+                              return Array.from({ length: numOfHourlyCharts }, (_, i) => ({
+                                  index: i,
+                                  selectedCategory: categoryList[i]?.name || categoryList[0].name,
+                                  sumType: "total" as const,
+                                  type: "bar" as const
+                              }));
+                          }
+                          return prevConfigs;
+                      });
                   }
                 });
-    }, [userData?.user?.email, numOfAnnualCharts, numOfWeeklyCharts]);
+    }, [userData?.user?.email, numOfWeeklyCharts, numOfDailyCharts, numOfHourlyCharts]);
 
     // Fetch days when user email changes (not on date change - we filter client-side)
     useEffect(() => {
@@ -340,68 +473,79 @@ export default function ChartsPage() {
         return createDayOfWeekEntries(dayEntries, selectedDate) || [];
     }, [dayEntries, selectedDate, createDayOfWeekEntries]);
 
-    const handleCategoryChange = (index: number, value: string, chartType: "annual" | "weekly") => {
-        if (chartType === "annual") {
-            const newChartConfigs = [...annualChartConfigs];
-            newChartConfigs[index] = { ...newChartConfigs[index], selectedCategory: value };
-            setAnnualChartConfigs(newChartConfigs);
-        } else {
+
+    const hourlyEntries = useMemo(() => {
+        return createHourlyEntries(dayEntries, selectedDate) || [];
+    }, [dayEntries, selectedDate, createHourlyEntries]);
+
+    const handleCategoryChange = (index: number, value: string, chartType: ChartType) => {
+        if (chartType === ChartType.WEEKLY) {
             const newChartConfigs = [...weeklyChartConfigs];
             newChartConfigs[index] = { ...newChartConfigs[index], selectedCategory: value };
             setWeeklyChartConfigs(newChartConfigs);
+        } else if (chartType === ChartType.DAILY) {
+            const newChartConfigs = [...dailyChartConfigs];
+            newChartConfigs[index] = { ...newChartConfigs[index], selectedCategory: value };
+            setDailyChartConfigs(newChartConfigs);
+        } else if (chartType === ChartType.HOURLY) {
+            const newChartConfigs = [...hourlyChartConfigs];
+            newChartConfigs[index] = { ...newChartConfigs[index], selectedCategory: value };
+            setHourlyChartConfigs(newChartConfigs);
         }
     }
 
-    const toggleChartSumType = (index: number, chartType: "annual" | "weekly") => {
-        if (chartType === "annual") {
-            const newChartConfigs = [...annualChartConfigs];
+    const toggleChartSumType = (index: number, chartType: ChartType) => {
+        if (chartType === ChartType.WEEKLY) {
+            const newChartConfigs = [...weeklyChartConfigs];
             newChartConfigs[index] = { 
                 ...newChartConfigs[index], 
                 sumType: newChartConfigs[index].sumType === "total" ? "average" : "total" 
             };
-            setAnnualChartConfigs(newChartConfigs);
-        } else {
-            const newChartConfigs = [...weeklyChartConfigs];
-            newChartConfigs[index] = { 
-                ...newChartConfigs[index], 
-                sumType: newChartConfigs[index].sumType === "total" ? "average" : "total" 
-            };
             setWeeklyChartConfigs(newChartConfigs);
+        } else if (chartType === ChartType.DAILY) {
+            const newChartConfigs = [...dailyChartConfigs];
+            newChartConfigs[index] = { 
+                ...newChartConfigs[index],
+                sumType: newChartConfigs[index].sumType === "total" ? "average" : "total"
+            };
+            setDailyChartConfigs(newChartConfigs);
+        } else if (chartType === ChartType.HOURLY) {
+            const newChartConfigs = [...hourlyChartConfigs];
+            newChartConfigs[index] = { 
+                ...newChartConfigs[index],
+                sumType: newChartConfigs[index].sumType === "total" ? "average" : "total"
+            };
+            setHourlyChartConfigs(newChartConfigs);
         }
     }
 
-    const toggleChartType = (index: number, chartType: "annual" | "weekly") => {
-        if (chartType === "annual") {
-            const newChartConfigs = [...annualChartConfigs];
+    const toggleChartType = (index: number, chartType: ChartType) => {
+        if (chartType === ChartType.WEEKLY) {
+            const newChartConfigs = [...weeklyChartConfigs];
             newChartConfigs[index] = { 
                 ...newChartConfigs[index], 
                 type: newChartConfigs[index].type === "bar" ? "line" : "bar" 
             };
-            setAnnualChartConfigs(newChartConfigs);
-        } else {
-            const newChartConfigs = [...weeklyChartConfigs];
+            setWeeklyChartConfigs(newChartConfigs);
+        } else if (chartType === ChartType.DAILY) {
+            const newChartConfigs = [...dailyChartConfigs];
             newChartConfigs[index] = { 
                 ...newChartConfigs[index], 
                 type: newChartConfigs[index].type === "bar" ? "line" : "bar" 
             };
-            setWeeklyChartConfigs(newChartConfigs);
+            setDailyChartConfigs(newChartConfigs);
+        } else if (chartType === ChartType.HOURLY) {
+            const newChartConfigs = [...hourlyChartConfigs];
+            newChartConfigs[index] = { 
+                ...newChartConfigs[index],
+                type: newChartConfigs[index].type === "bar" ? "line" : "bar"
+            };
+            setHourlyChartConfigs(newChartConfigs);
         }
     }
 
-    const incrementNumOfCharts = (chartType: "annual" | "weekly") => {
-        if (chartType === "annual") {
-            setNumOfAnnualCharts(prev => prev + 1);
-            setAnnualChartConfigs(prevConfigs => {
-                const nextIndex = prevConfigs.length;
-                const defaultCategory = userCategories[nextIndex]?.name || userCategories[0]?.name || '';
-                return [...prevConfigs, {
-                    index: nextIndex,
-                    selectedCategory: defaultCategory,
-                    sumType: "total" as const,
-                    type: "bar" as const
-                }];
-            });
-        } else {
+    const incrementNumOfCharts = (chartType: ChartType) => {
+        if (chartType === ChartType.WEEKLY) {
             setNumOfWeeklyCharts(prev => prev + 1);
             setWeeklyChartConfigs(prevConfigs => {
                 const nextIndex = prevConfigs.length;
@@ -413,19 +557,35 @@ export default function ChartsPage() {
                     type: "bar" as const
                 }];
             });
+        } else if (chartType === ChartType.DAILY) {
+            setNumOfDailyCharts(prev => prev + 1);
+            setDailyChartConfigs(prevConfigs => {
+                const nextIndex = prevConfigs.length;
+                const defaultCategory = userCategories[nextIndex]?.name || userCategories[0]?.name || '';
+                return [...prevConfigs, {
+                    index: nextIndex,
+                    selectedCategory: defaultCategory,
+                    sumType: "total" as const,
+                    type: "bar" as const
+                }];
+            });
+        } else if (chartType === ChartType.HOURLY) {
+            setNumOfHourlyCharts(prev => prev + 1);
+            setHourlyChartConfigs(prevConfigs => {
+                const nextIndex = prevConfigs.length;
+                const defaultCategory = userCategories[nextIndex]?.name || userCategories[0]?.name || '';
+                return [...prevConfigs, {
+                    index: nextIndex,
+                    selectedCategory: defaultCategory,
+                    sumType: "total" as const,
+                    type: "bar" as const
+                }];
+            });
         }
     }
 
-    const decrementNumOfCharts = (chartType: "annual" | "weekly") => {
-        if (chartType === "annual") {
-            if (numOfAnnualCharts <= 1) { return }    
-            setNumOfAnnualCharts(prev => prev - 1);
-            setAnnualChartConfigs(prevConfigs => {
-                const newConfigs = [...prevConfigs];
-                newConfigs.pop();
-                return newConfigs;
-            });
-        } else {
+    const decrementNumOfCharts = (chartType: ChartType) => {
+        if (chartType === ChartType.WEEKLY) {
             if (numOfWeeklyCharts <= 1) { return }    
             setNumOfWeeklyCharts(prev => prev - 1);
             setWeeklyChartConfigs(prevConfigs => {
@@ -433,22 +593,44 @@ export default function ChartsPage() {
                 newConfigs.pop();
                 return newConfigs;
             });
+        } else if (chartType === ChartType.DAILY) {
+            if (numOfDailyCharts <= 1) { return }    
+            setNumOfDailyCharts(prev => prev - 1);
+            setDailyChartConfigs(prevConfigs => {
+                const newConfigs = [...prevConfigs];
+                newConfigs.pop();
+                return newConfigs;
+            });
+        } else if (chartType === ChartType.HOURLY) {
+            if (numOfHourlyCharts <= 1) { return }    
+            setNumOfHourlyCharts(prev => prev - 1);
+            setHourlyChartConfigs(prevConfigs => {
+                const newConfigs = [...prevConfigs];
+                newConfigs.pop();
+                return newConfigs;
+            });
         }
     }
 
-    const handleRemoveChart = (index: number, chartType: "annual" | "weekly") => {
-        if (chartType === "annual") {
-            if (numOfAnnualCharts <= 1) { return }
-            const newChartConfigs = [...annualChartConfigs];
-            newChartConfigs.splice(index, 1);
-            setAnnualChartConfigs(newChartConfigs);
-            setNumOfAnnualCharts(prev => prev - 1);
-        } else {
+    const handleRemoveChart = (index: number, chartType: ChartType) => {
+        if (chartType === ChartType.WEEKLY) {
             if (numOfWeeklyCharts <= 1) { return }
             const newChartConfigs = [...weeklyChartConfigs];
             newChartConfigs.splice(index, 1);
             setWeeklyChartConfigs(newChartConfigs);
             setNumOfWeeklyCharts(prev => prev - 1);
+        } else if (chartType === ChartType.DAILY) {
+            if (numOfDailyCharts <= 1) { return }
+            const newChartConfigs = [...dailyChartConfigs];
+            newChartConfigs.splice(index, 1);
+            setDailyChartConfigs(newChartConfigs);
+            setNumOfDailyCharts(prev => prev - 1);
+        } else if (chartType === ChartType.HOURLY) {    
+            if (numOfHourlyCharts <= 1) { return }
+            const newChartConfigs = [...hourlyChartConfigs];
+            newChartConfigs.splice(index, 1);
+            setHourlyChartConfigs(newChartConfigs);
+            setNumOfHourlyCharts(prev => prev - 1);
         }
     }
 
@@ -456,34 +638,52 @@ export default function ChartsPage() {
     <div>
         <PageContainer slots={{ header: CustomPageHeaderComponent }} sx={{ minHeight: 'calc(100vh - 128px)' }}>
             <ChartsPageContainer    
-                title="Annual Charts"
-                numOfCharts={numOfAnnualCharts}
-                chartConfigs={annualChartConfigs}
-                isEditing={isEditing}
-                entries={weekEntries}
-                userCategories={userCategories}
-                onCategoryChange={(index, value) => handleCategoryChange(index, value, "annual")}
-                onToggleChartSumType={(index) => toggleChartSumType(index, "annual")}
-                onToggleChartType={(index) => toggleChartType(index, "annual")}
-                createBarChartData={createWeekEntriesBarChartData}
-                toggleIsEditing={toggleIsEditing}
-                handleRemoveChart={(index) => handleRemoveChart(index, "annual")}
-                incrementNumOfCharts={() => incrementNumOfCharts("annual")}
-            />
-            <ChartsPageContainer    
                 title="Weekly Charts"
+                chartType={ChartType.WEEKLY}
                 numOfCharts={numOfWeeklyCharts}
                 chartConfigs={weeklyChartConfigs}
                 isEditing={isEditing}
+                entries={weekEntries}
+                userCategories={userCategories}
+                onCategoryChange={(index, value) => handleCategoryChange(index, value, ChartType.WEEKLY)}
+                onToggleChartSumType={(index) => toggleChartSumType(index, ChartType.WEEKLY)}
+                onToggleChartType={(index) => toggleChartType(index, ChartType.WEEKLY)}
+                createBarChartData={createWeekEntriesBarChartData}
+                toggleIsEditing={toggleIsEditing}
+                handleRemoveChart={(index) => handleRemoveChart(index, ChartType.WEEKLY)}
+                incrementNumOfCharts={() => incrementNumOfCharts(ChartType.WEEKLY)}
+            />
+            <ChartsPageContainer    
+                title="Daily Charts"
+                chartType={ChartType.DAILY}
+                numOfCharts={numOfDailyCharts}
+                chartConfigs={dailyChartConfigs}
+                isEditing={isEditing}
                 entries={dayOfWeekEntries}
                 userCategories={userCategories}
-                onCategoryChange={(index, value) => handleCategoryChange(index, value, "weekly")}
-                onToggleChartSumType={(index) => toggleChartSumType(index, "weekly")}
-                onToggleChartType={(index) => toggleChartType(index, "weekly")}
+                onCategoryChange={(index, value) => handleCategoryChange(index, value, ChartType.DAILY)}
+                onToggleChartSumType={(index) => toggleChartSumType(index, ChartType.DAILY)}
+                onToggleChartType={(index) => toggleChartType(index, ChartType.DAILY)}
                 createBarChartData={createDayOfWeekEntriesBarChartData}
                 toggleIsEditing={toggleIsEditing}
-                handleRemoveChart={(index) => handleRemoveChart(index, "weekly")}
-                incrementNumOfCharts={() => incrementNumOfCharts("weekly")}
+                handleRemoveChart={(index) => handleRemoveChart(index, ChartType.DAILY)}
+                incrementNumOfCharts={() => incrementNumOfCharts(ChartType.DAILY)}
+            />
+            <ChartsPageContainer    
+                title="Hourly Charts"
+                chartType={ChartType.HOURLY}
+                numOfCharts={numOfHourlyCharts}
+                chartConfigs={hourlyChartConfigs}
+                isEditing={isEditing}
+                entries={hourlyEntries}
+                userCategories={userCategories}
+                onCategoryChange={(index, value) => handleCategoryChange(index, value, ChartType.HOURLY)}
+                onToggleChartSumType={(index) => toggleChartSumType(index, ChartType.HOURLY)}
+                onToggleChartType={(index) => toggleChartType(index, ChartType.HOURLY)}
+                createBarChartData={createHourlyEntriesBarChartData}
+                toggleIsEditing={toggleIsEditing}
+                handleRemoveChart={(index) => handleRemoveChart(index, ChartType.HOURLY)}
+                incrementNumOfCharts={() => incrementNumOfCharts(ChartType.HOURLY)}
             />
         </PageContainer>
         { isEditing && 
