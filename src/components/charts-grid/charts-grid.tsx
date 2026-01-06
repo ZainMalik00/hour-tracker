@@ -1,11 +1,12 @@
 import React from 'react';
 import { Typography, Grid, Card, Button, Accordion, AccordionSummary, AccordionDetails } from '@mui/material';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
-import ChartCard from '../../chart-card/chart-card';
-import { ChartConfig } from '../../../backend/entities/ChartConfig';
-import styles from './charts-page-container.module.css';
+import ChartCard from '../chart-card/chart-card';
+import { ChartConfig } from '../../backend/entities/ChartConfig';
+import styles from './charts-grid.module.css';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import { ChartType } from '../../../backend/services/chart-service';
+import { ChartType } from '../../backend/services/chart-service';
+import { HourlyEntry } from '../../pages/charts';
 
 export interface WeekEntry {
   week: number;
@@ -17,11 +18,11 @@ export interface DayOfWeekEntry {
   timeEntries: any[] | null;
 }
 
-export interface ChartsPageContainerProps {
+export interface ChartsGridProps {
   numOfCharts: number;
   chartConfigs: ChartConfig[];
   isEditing: boolean;
-  entries: WeekEntry[] | DayOfWeekEntry[];
+  entries: WeekEntry[] | DayOfWeekEntry[] | HourlyEntry[];
   userCategories: any[];
   title: string;
   chartType: ChartType;
@@ -34,7 +35,7 @@ export interface ChartsPageContainerProps {
   incrementNumOfCharts: () => void;
 }
 
-const ChartsPageContainer = ({
+const ChartsGrid = ({
   numOfCharts,
   chartConfigs,
   isEditing,
@@ -49,7 +50,7 @@ const ChartsPageContainer = ({
   toggleIsEditing,
   handleRemoveChart,
   incrementNumOfCharts
-}: ChartsPageContainerProps) => {
+}: ChartsGridProps) => {
   return (
     <div>
       <Accordion defaultExpanded className={styles.accordionContainer}>
@@ -110,4 +111,4 @@ const ChartsPageContainer = ({
   );
 };
 
-export default ChartsPageContainer;
+export default ChartsGrid;

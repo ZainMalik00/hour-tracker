@@ -3,7 +3,7 @@ import { PageContainer, PageHeader, PageHeaderToolbar } from '@toolpad/core/Page
 import { useSession } from 'next-auth/react';
 import { TimeEntry } from '../../components/hour-entry-form/hour-entry-form';
 import { GetDays } from '../../backend/user-stories/daily/get-daily-entries/get-daily-entries';
-import { Box, Button } from '@mui/material';
+import { Box, Button, Card, Typography } from '@mui/material';
 import { GetCategories } from '../../backend/user-stories/categories/get-categories/get-categories';
 import { DefaultCategories } from '../../backend/entities/DefaultCategories';
 import { GetChartConfigs } from '../../backend/user-stories/charts/get-chart-configs.ts/get-chart-configs';
@@ -14,8 +14,9 @@ import dayjs from 'dayjs';
 import isLeapYear from 'dayjs/plugin/isLeapYear';
 import { ChartConfig } from '../../backend/entities/ChartConfig';
 import DesignServicesIcon from '@mui/icons-material/DesignServices';
-import ChartsPageContainer from '../../components/page-containers/charts-page-container/charts-page-container';
+import ChartsGrid from '../../components/charts-grid/charts-grid';
 import { ChartType } from '../../backend/services/chart-service';
+import { DefaultizedPieValueType, PieChart } from '@mui/x-charts';
 
 dayjs.extend(isLeapYear);
 export interface DayEntry {
@@ -33,6 +34,18 @@ export interface WeekEntry {
 export interface DayOfWeekEntry {
   dayOfWeek: number;
   timeEntries: TimeEntry[] | null;
+}
+
+export interface HourlyEntry {
+  hour: string;
+  timeEntries: TimeEntry[] | null;
+}
+
+export interface PieChartData {
+  id: number;
+  value: number;
+  label: string;
+  color: string;
 }
 
 function CustomPageToolbar({ selectedDate, onSelectedDateChange, isEditing, toggleIsEditing }: { selectedDate: dayjs.Dayjs; onSelectedDateChange: (date: dayjs.Dayjs) => void; isEditing: boolean; toggleIsEditing: () => void }) {
@@ -218,7 +231,7 @@ export default function ChartsPage() {
     }, [dayEntries]);
 
 
-    const createHourlyEntries = useCallback((dayEntries: DayEntry[], year: number): any[] => {
+    const createHourlyEntries = useCallback((dayEntries: DayEntry[], year: number): HourlyEntry[] => {
         const yearString = year.toString();
         const combinedMap: { [key: number]: any } = {};
         const timeIntervalToIndexMap = new Map<string, number>();
@@ -278,7 +291,11 @@ export default function ChartsPage() {
         return dayjs().year(selectedDate).isLeapYear();
     }, [selectedDate]);
 
-    const getTotalTimeEntriesHoursByCategory = useCallback((category: string, entry: WeekEntry | DayOfWeekEntry | any): number => {
+    const getTotalTimeEntriesHours = useCallback((entries: DayOfWeekEntry[] | HourlyEntry[]): number => {
+        return entries.flatMap((entry) =>  entry.timeEntries).length / 2;
+    }, []);
+
+    const getTotalTimeEntriesHoursByCategory = useCallback((category: string, entry: WeekEntry | DayOfWeekEntry | HourlyEntry): number => {
         if (!entry.timeEntries) { return 0; }
         // Handles both nested arrays (WeekEntry) and flat arrays (DayOfWeekEntry, HourlyEntry)
         let count = 0;
@@ -298,7 +315,7 @@ export default function ChartsPage() {
         return count / 2;
     }, []);
 
-    const getAverageTimeEntriesHoursByCategory = useCallback((category: string, entry: WeekEntry | DayOfWeekEntry | any, chartType: ChartType): number => {
+    const getAverageTimeEntriesHoursByCategory = useCallback((category: string, entry: WeekEntry | DayOfWeekEntry | HourlyEntry, chartType: ChartType): number => {
         if (!entry.timeEntries) { return 0; }
         let totalTimeEntries = 0;
         if(chartType === ChartType.WEEKLY) {
@@ -324,6 +341,24 @@ export default function ChartsPage() {
         return count / totalTimeEntries;
     }, [isSelectedYearLeapYear]);
 
+    const createPieChartData = useCallback((entries: DayOfWeekEntry[] | HourlyEntry[]): PieChartData[] => {
+        const data: PieChartData[] = [];
+        if (!entries || !Array.isArray(entries)) { return []; }
+        
+        const allTimeEntries = entries.flatMap((entry) => entry.timeEntries || []);
+        
+        userCategories.forEach((categoryEntry, index) => {
+            const count = allTimeEntries.filter((timeEntry) => timeEntry && timeEntry.category === categoryEntry.name).length;
+            data.push({ 
+                id: index, 
+                value: count / 2, 
+                label: categoryEntry.name, 
+                color: categoryEntry.color 
+            });
+        })   
+        return data;
+    }, [userCategories]);
+    
     const convertDayOfWeekToDayOfWeekName = useCallback((dayOfWeek: number) => {
         switch(dayOfWeek) {
             case 0: return "Sun";
@@ -481,6 +516,37 @@ export default function ChartsPage() {
         return createDayOfWeekEntries(dayEntries, selectedDate) || [];
     }, [dayEntries, selectedDate, createDayOfWeekEntries]);
 
+    const totalTimeEntriesHours = useMemo(() => {
+        return getTotalTimeEntriesHours(dayOfWeekEntries);
+    }, [dayOfWeekEntries, getTotalTimeEntriesHours]);
+
+    const getPieChartValuePercentage = useCallback((value: number) => {
+        if (totalTimeEntriesHours === 0) return '0%';
+        return `${(value / totalTimeEntriesHours * 100).toFixed(1)}%`;
+    }, [totalTimeEntriesHours]);
+
+    const getPieChartArcLabel = useCallback((params: DefaultizedPieValueType) => {
+        if (totalTimeEntriesHours === 0) return '0 hours (0%)';
+        return `${params.value} (${getPieChartValuePercentage(params.value)})`;
+    }, [totalTimeEntriesHours, getPieChartValuePercentage]);
+
+    const pieChartData = useMemo(() => {
+        return createPieChartData(dayOfWeekEntries);
+    }, [dayOfWeekEntries, createPieChartData]);
+
+    const pieChartValueFormatter = useCallback((value: any) => {
+        return `${value.value} hours (${getPieChartValuePercentage(value.value)})`;
+    }, [getPieChartValuePercentage]);
+
+    const pieChartSeries = useMemo(() => [{
+        data: pieChartData,
+        innerRadius: 100, 
+        outerRadius: 225, 
+        highlightScope: { highlight: 'item' as const },
+        valueFormatter: pieChartValueFormatter,
+        arcLabel: getPieChartArcLabel,
+        arcLabelMinAngle: 25,
+    }] as const, [pieChartData, pieChartValueFormatter, getPieChartArcLabel]);
 
     const hourlyEntries = useMemo(() => {
         return createHourlyEntries(dayEntries, selectedDate) || [];
@@ -645,7 +711,33 @@ export default function ChartsPage() {
   return (
     <div>
         <PageContainer slots={{ header: CustomPageHeaderComponent }} sx={{ minHeight: 'calc(100vh - 128px)' }}>
-            <ChartsPageContainer    
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', }}>
+                <Card sx={{ 
+                    display: 'flex', 
+                    flexDirection: 'column', 
+                    alignItems: 'center', 
+                    justifyContent: 'center', 
+                    padding: 'var(--mui-spacing)', 
+                    margin: 'var(--mui-spacing) 0',
+                    maxWidth: '500px' 
+                }}>
+                    <Typography variant="h6">Activity Breakdown</Typography>
+                    <PieChart
+                        series={pieChartSeries}
+                        height={450}
+                        width={450}
+                        hideLegend={true}
+                        sx={{
+                            [`& .MuiPieArcLabel-root`]: {
+                                fontWeight: 'bold'
+                            },
+                            }}
+                    />
+                </Card>
+            </div>
+
+
+            <ChartsGrid    
                 title="Weekly Charts"
                 chartType={ChartType.WEEKLY}
                 numOfCharts={numOfWeeklyCharts}
@@ -661,7 +753,7 @@ export default function ChartsPage() {
                 handleRemoveChart={(index) => handleRemoveChart(index, ChartType.WEEKLY)}
                 incrementNumOfCharts={() => incrementNumOfCharts(ChartType.WEEKLY)}
             />
-            <ChartsPageContainer    
+            <ChartsGrid    
                 title="Daily Charts"
                 chartType={ChartType.DAILY}
                 numOfCharts={numOfDailyCharts}
@@ -677,7 +769,7 @@ export default function ChartsPage() {
                 handleRemoveChart={(index) => handleRemoveChart(index, ChartType.DAILY)}
                 incrementNumOfCharts={() => incrementNumOfCharts(ChartType.DAILY)}
             />
-            <ChartsPageContainer    
+            <ChartsGrid    
                 title="Hourly Charts"
                 chartType={ChartType.HOURLY}
                 numOfCharts={numOfHourlyCharts}
