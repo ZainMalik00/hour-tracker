@@ -38,10 +38,14 @@ const ChartCard = React.memo(({
   onToggleChartType,
   createBarChartData 
 }: ChartCardProps) => {
+  
+  if (entries.length === 0) { return <div></div>; }
+
   const categoryBarChartData = useMemo(() => 
     createBarChartData(chartConfig.selectedCategory, chartConfig.sumType, entries),
     [chartConfig.selectedCategory, chartConfig.sumType, entries, createBarChartData]
   );
+
   const selectedCategoryColor = userCategories.find((category) => category.name === chartConfig.selectedCategory)?.color || 'primary.main';
   const chartSumTypeText = chartConfig.sumType === "total" ? "Total" : "Average";
   const chartTypeText = chartConfig.type === "bar" ? "Bar Chart" : "Line Chart";

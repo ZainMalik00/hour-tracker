@@ -338,6 +338,7 @@ export default function ChartsPage() {
                 }
             } else if (timeEntry && timeEntry.category === category) { count++; } // Flat array case (DayOfWeekEntry, HourlyEntry)
         }
+        if (totalTimeEntries === 0) { return 0; }
         return count / totalTimeEntries;
     }, [isSelectedYearLeapYear]);
 
