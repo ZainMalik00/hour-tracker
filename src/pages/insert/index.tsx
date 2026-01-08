@@ -25,13 +25,13 @@ function CustomPageToolbar({ selectedDate, onSelectedDateChange }: { selectedDat
   );
 }
 
-function CustomPageHeader({ status, selectedDate, onSelectedDateChange }: { status: string; selectedDate: dayjs.Dayjs; onSelectedDateChange: (date: dayjs.Dayjs) => void }) {
+function CustomPageHeader({ selectedDate, onSelectedDateChange }: {selectedDate: dayjs.Dayjs; onSelectedDateChange: (date: dayjs.Dayjs) => void }) {
   const CustomPageToolbarComponent = React.useCallback(
     () => <CustomPageToolbar selectedDate={selectedDate} onSelectedDateChange={onSelectedDateChange} />,
-    [status, selectedDate, onSelectedDateChange],
+    [selectedDate, onSelectedDateChange],
   );
 
-  return <PageHeader slots={{ toolbar: CustomPageToolbarComponent }} />;
+  return <PageHeader title={"Insert Time Entries"} slots={{ toolbar: CustomPageToolbarComponent }} />;
 }
 
 export default function InsertPage() {
@@ -47,7 +47,7 @@ export default function InsertPage() {
   }, []);
 
   const CustomPageHeaderComponent = React.useCallback(
-    () => <CustomPageHeader status="" selectedDate={selectedDate} onSelectedDateChange={handleSelectedDateChange} />,
+    () => <CustomPageHeader selectedDate={selectedDate} onSelectedDateChange={handleSelectedDateChange} />,
     [selectedDate, handleSelectedDateChange],
   );
 

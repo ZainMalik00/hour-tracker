@@ -2,13 +2,13 @@ import './_app.css';
 import * as React from 'react';
 import { NextAppProvider } from '@toolpad/core/nextjs';
 import { DashboardLayout } from '@toolpad/core/DashboardLayout';
-import { PageContainer } from '@toolpad/core/PageContainer';
 import Head from 'next/head';
 import { AppCacheProvider } from '@mui/material-nextjs/v14-pagesRouter';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import BarChartIcon from '@mui/icons-material/BarChart';
 import QueryStatsIcon from '@mui/icons-material/QueryStats';
 import ViewTimelineIcon from '@mui/icons-material/ViewTimeline';
+import PaletteIcon from '@mui/icons-material/Palette';
 import type { NextPage } from 'next';
 import type { AppProps } from 'next/app';
 import type { Navigation } from '@toolpad/core/AppProvider';
@@ -30,6 +30,11 @@ const NAVIGATION: Navigation = [
     segment: 'insert',
     title: 'Insert',
     icon: <DashboardIcon />,
+    children: [{
+      segment: 'categories',
+      title: 'Categories',
+      icon: <PaletteIcon />  
+    }]
   },
   {
     segment: 'charts',
@@ -101,7 +106,6 @@ const AUTHENTICATION = {
 function getDefaultLayout(page: React.ReactElement<any>) {
   return (
     <DashboardLayout defaultSidebarCollapsed>
-      {/* <PageContainer>{page}</PageContainer> */}
       {page}
     </DashboardLayout>
   );

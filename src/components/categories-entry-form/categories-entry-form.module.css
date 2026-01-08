@@ -1,0 +1,6 @@
+
+.nameContainer {
+    display: flex; 
+    gap: var(--mui-spacing);
+    align-items: center;
+}

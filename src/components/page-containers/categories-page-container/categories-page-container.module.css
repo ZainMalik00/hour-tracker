@@ -1,0 +1,24 @@
+.CategoriesPageContainer {
+    display: flex;
+    flex-direction: column;
+    gap: var(--mui-spacing);
+}
+
+.chipsContainer {
+    max-height: 40vh;
+    overflow-y: auto;
+    background-color: var(--mui-palette-background-paper);
+    padding: calc(var(--mui-spacing) * 2);
+}
+
+.categoryChip {
+    width: max-content;
+    margin: var(--mui-spacing);
+}
+
+.categoryChipContents {
+    display: flex;
+    align-items: center;
+    gap: var(--mui-spacing);
+    width: max-content;
+}

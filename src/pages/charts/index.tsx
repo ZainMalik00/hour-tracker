@@ -3,7 +3,7 @@ import { PageContainer, PageHeader, PageHeaderToolbar } from '@toolpad/core/Page
 import { useSession } from 'next-auth/react';
 import { TimeEntry } from '../../components/hour-entry-form/hour-entry-form';
 import { GetDays } from '../../backend/user-stories/daily/get-daily-entries/get-daily-entries';
-import { Box, Button, Card, Typography } from '@mui/material';
+import { Box, Button, Card, Divider, Typography } from '@mui/material';
 import { GetCategories } from '../../backend/user-stories/categories/get-categories/get-categories';
 import { DefaultCategories } from '../../backend/entities/DefaultCategories';
 import { GetChartConfigs } from '../../backend/user-stories/charts/get-chart-configs.ts/get-chart-configs';
@@ -753,6 +753,7 @@ export default function ChartsPage() {
                 handleRemoveChart={(index) => handleRemoveChart(index, ChartType.WEEKLY)}
                 incrementNumOfCharts={() => incrementNumOfCharts(ChartType.WEEKLY)}
             />
+            <Divider />
             <ChartsGrid    
                 title="Daily Charts"
                 chartType={ChartType.DAILY}
@@ -769,6 +770,7 @@ export default function ChartsPage() {
                 handleRemoveChart={(index) => handleRemoveChart(index, ChartType.DAILY)}
                 incrementNumOfCharts={() => incrementNumOfCharts(ChartType.DAILY)}
             />
+            <Divider />
             <ChartsGrid    
                 title="Hourly Charts"
                 chartType={ChartType.HOURLY}
