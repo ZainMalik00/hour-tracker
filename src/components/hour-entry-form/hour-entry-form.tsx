@@ -236,16 +236,17 @@ const HourEntryForm = ({
             onClick={addRemainingTimeEntries}
             disabled={numTimeSlots >= MAX_TIME_SLOTS}
           >
-            {numTimeSlots == 0 ? "Add All Entries" : "Add Remaining Entries"}
+            {numTimeSlots == 0 ? "Add All" : "Add Remaining"}
           </Button>
           <Button 
             size='large'
             variant="outlined" 
+            color="error"
             startIcon={<HighlightOffIcon />} 
             onClick={removeAllTimeEntries}
             disabled={numTimeSlots <= 0}
           >
-            Remove All Entries
+            Remove All
           </Button>
         </div>
         <Card sx={{backgroundColor: "primary.contrastText"}}>
@@ -366,7 +367,7 @@ const HourEntryForm = ({
                         </TableCell>
                         <StyledTableCell key={"remove"}>
                           <IconButton aria-label="remove time entry" onClick={() => removeTimeEntry(index)}>
-                            <RemoveCircleOutlineIcon color='primary' />
+                            <RemoveCircleOutlineIcon color='error' />
                           </IconButton>
                         </StyledTableCell>
                       </StyledTableRow>

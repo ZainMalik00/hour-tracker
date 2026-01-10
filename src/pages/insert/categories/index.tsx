@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef } from 'react'; 
+import React, { startTransition, useCallback, useEffect, useRef } from 'react'; 
 import InsertPageContainer from '../../../components/page-containers/insert-page-container/insert-page-container';
 import { Box, Button, FormControl, Typography } from '@mui/material';
 import { PageContainer, PageHeader, PageHeaderToolbar } from '@toolpad/core/PageContainer';
@@ -57,10 +57,31 @@ export default function InsertPage() {
     });
   }, []);
   
+
+  const handleAddCategory = useCallback(() => {
+    startTransition(() => {
+      const randomColor = "#" + Math.floor(Math.random()*16777215).toString(16).padStart(6, '0');
+      const newCategory = { name: "New Category " + (categoriesLength + 1), color: randomColor, description: "New Category Description" };
+      setUserCategories((prevCategories) => {
+        return [...prevCategories, newCategory];
+      });
+      setSelectedCategory(newCategory);
+      setCategoriesLength(prevLength => prevLength + 1);
+      selectedCategoryRef.current = newCategory;
+    });
+  }, [userCategories]);
+
   return (
     <div>
-      <PageContainer title="Insert Categories" sx={{ minHeight: 'calc(100vh - 128px)' }}>
-        <CategoriesPageContainer selectedCategory={selectedCategory} onSelectedCategoryChange={handleSelectedCategoryChange} userCategories={userCategories} onUserCategoriesChange={handleUserCategoriesChange} onCategoryChange={handleCategoryChange} />
+      <PageContainer title="Modify Categories" sx={{ minHeight: 'calc(100vh - 128px)' }}>
+        <CategoriesPageContainer 
+          selectedCategory={selectedCategory} 
+          onSelectedCategoryChange={handleSelectedCategoryChange} 
+          userCategories={userCategories} 
+          onUserCategoriesChange={handleUserCategoriesChange} 
+          onCategoryChange={handleCategoryChange} 
+          onAddCategory={handleAddCategory} 
+        />
       </PageContainer>
       {/* <Box sx={{ position: 'sticky', bottom: 0, left: 0, right: 0, scrollbarGutter: "auto", backgroundColor: 'primary.contrastText'}}>
         <div style={{ 

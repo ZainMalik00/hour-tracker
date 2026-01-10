@@ -63,6 +63,12 @@ const THEME = createTheme({
         },
         background: {
           paper: "#F9FFFA"
+        },
+        error: {
+          main: "#ef4444",
+          light: "#fca5a5",
+          dark: "#b91c1c",
+          contrastText: "#fff",
         }
       },
     },
@@ -76,6 +82,12 @@ const THEME = createTheme({
         },
         background: {
           paper: "#00140eff"
+        },
+        error: {
+          main: "#ef4444",
+          light: "#fca5a5",
+          dark: "#b91c1c",
+          contrastText: "#fff",
         }
       },
     },

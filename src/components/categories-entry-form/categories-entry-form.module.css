@@ -4,3 +4,10 @@
     gap: var(--mui-spacing);
     align-items: center;
 }
+.colorPickerWrapper :global(.sketch-picker) {
+    background: transparent !important;
+}
+
+.colorPickerWrapper :global(.sketch-picker) label {
+    color: var(--contrastText) !important;
+}

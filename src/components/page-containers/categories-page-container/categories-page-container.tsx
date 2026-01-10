@@ -3,16 +3,24 @@ import styles from './categories-page-container.module.css';
 import { useTheme, useMediaQuery, Card, ListItem, ListItemButton, ListItemText, Box, Chip, Typography } from '@mui/material';
 import { CategoryEntry, DefaultCategories } from '../../../backend/entities/DefaultCategories';
 import CategoriesEntryForm from '../../categories-entry-form/categories-entry-form';
-
+import ControlPointIcon from '@mui/icons-material/ControlPoint';
 interface CategoriesPageContainerProps {
     selectedCategory: CategoryEntry | null;
     onSelectedCategoryChange: (category: CategoryEntry) => void;
     userCategories: CategoryEntry[];
     onUserCategoriesChange: (categories: CategoryEntry[]) => void;
     onCategoryChange: (category: CategoryEntry) => void;
+    onAddCategory: () => void;
 }
 
-const CategoriesPageContainer = ({ selectedCategory, onSelectedCategoryChange, userCategories, onUserCategoriesChange, onCategoryChange }: CategoriesPageContainerProps) => {
+const CategoriesPageContainer = ({ 
+  selectedCategory, 
+  onSelectedCategoryChange, 
+  userCategories, 
+  onUserCategoriesChange, 
+  onCategoryChange,
+  onAddCategory 
+}: CategoriesPageContainerProps) => {
   const theme = useTheme();
   const isBelowMd = useMediaQuery(theme.breakpoints.down('md'));
 
@@ -45,6 +53,13 @@ const CategoriesPageContainer = ({ selectedCategory, onSelectedCategoryChange, u
                         className={styles.categoryChip}
                     />
                 ))}
+                <Chip 
+                  variant="outlined"
+                  label={<ControlPointIcon />}
+                  clickable
+                  onClick={() => onAddCategory()}
+                  className={styles.categoryChipAdd}
+                />
             </div>
             <CategoriesEntryForm
                 selectedCategory={selectedCategory}

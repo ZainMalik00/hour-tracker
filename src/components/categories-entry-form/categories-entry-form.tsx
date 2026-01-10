@@ -1,8 +1,9 @@
-import React, { useMemo, useCallback} from 'react';
+import React from 'react';
 import styles from './categories-entry-form.module.css';
 import { CategoryEntry } from '../../backend/entities/DefaultCategories';
-import { TextField, Typography } from '@mui/material';
-
+import { Button, Popover, TextField, Typography } from '@mui/material';
+import { SketchPicker } from 'react-color';
+import PopupState, { bindTrigger, bindPopover } from 'material-ui-popup-state';
 interface CategoriesEntryFormProps {
   selectedCategory: CategoryEntry | null;
   onSelectedCategoryChange: (category: CategoryEntry) => void;
@@ -13,8 +14,8 @@ const CategoriesEntryForm = ({
   selectedCategory,
   onSelectedCategoryChange,
   onCategoryChange,
-}: CategoriesEntryFormProps) => {
-
+}: CategoriesEntryFormProps) => {       
+  
   const handleNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (selectedCategory) {
       const newCategory = {name: event.currentTarget.value, color: selectedCategory.color, description: selectedCategory.description};
@@ -25,6 +26,14 @@ const CategoriesEntryForm = ({
   const handleDescriptionChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (selectedCategory) {
       const newCategory = {name: selectedCategory.name, color: selectedCategory.color, description: e.target.value};
+      onCategoryChange(newCategory);
+    }
+  };
+
+
+  const handleColorChange = (color: string) => {
+    if (selectedCategory) {
+      const newCategory = {name: selectedCategory.name, color: color, description: selectedCategory.description};
       onCategoryChange(newCategory);
     }
   };
@@ -52,6 +61,46 @@ const CategoriesEntryForm = ({
                 }
               }} 
             />
+        {selectedCategory?.color && <div className={styles.colorContainer}>
+          <PopupState variant="popover" popupId="color-picker-popup-popover">
+            {(popupState) => (
+              <div>
+                <Button variant="outlined" {...bindTrigger(popupState)}>
+                  <div 
+                    style={{ 
+                      maxWidth: "10px",
+                      marginRight: "calc(var(--mui-spacing) / 2)",
+                      backgroundColor: selectedCategory?.color, 
+                      color: selectedCategory?.color, 
+                    }}
+                  >H</div>
+                  Select Color
+                </Button>
+                <Popover
+                  {...bindPopover(popupState)}
+                  anchorOrigin={{
+                    vertical: 'bottom',
+                    horizontal: 'center',
+                  }}
+                  transformOrigin={{
+                    vertical: 'top',
+                    horizontal: 'center',
+                  }}
+                >
+                  <div className={styles.colorPickerWrapper}>
+                    <SketchPicker 
+                      color={selectedCategory?.color} 
+                      onChange={(color) => handleColorChange(color.hex)} 
+                      disableAlpha={true}
+                    />
+                  </div>
+    
+                </Popover>
+              </div>
+            )}
+          </PopupState>   
+        </div>
+        }
       </div>
       <Typography variant="h6">Description:</Typography>
       <TextField
@@ -67,8 +116,7 @@ const CategoriesEntryForm = ({
           }}
           onChange={handleDescriptionChange}
         />
-      <Typography variant="body1">{selectedCategory?.color}</Typography>
-    </div>
+      </div>
   );
 };
 
