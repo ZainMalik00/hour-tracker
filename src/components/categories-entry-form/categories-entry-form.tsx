@@ -18,14 +18,14 @@ const CategoriesEntryForm = ({
   
   const handleNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (selectedCategory) {
-      const newCategory = {name: event.currentTarget.value, color: selectedCategory.color, description: selectedCategory.description};
+      const newCategory = {id: selectedCategory.id, name: event.currentTarget.value, color: selectedCategory.color, description: selectedCategory.description};
       onCategoryChange(newCategory);
     }
   };
 
   const handleDescriptionChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (selectedCategory) {
-      const newCategory = {name: selectedCategory.name, color: selectedCategory.color, description: e.target.value};
+      const newCategory = {id: selectedCategory.id, name: selectedCategory.name, color: selectedCategory.color, description: e.target.value};
       onCategoryChange(newCategory);
     }
   };
@@ -33,7 +33,7 @@ const CategoriesEntryForm = ({
 
   const handleColorChange = (color: string) => {
     if (selectedCategory) {
-      const newCategory = {name: selectedCategory.name, color: color, description: selectedCategory.description};
+      const newCategory = {id: selectedCategory.id, name: selectedCategory.name, color: color, description: selectedCategory.description};
       onCategoryChange(newCategory);
     }
   };
