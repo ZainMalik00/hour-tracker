@@ -11,6 +11,7 @@ import TimelineOppositeContent, { timelineOppositeContentClasses } from '@mui/la
 import dayjs from 'dayjs';
 import objectSupport from 'dayjs/plugin/objectSupport';
 import { GetDailyEntryTimes } from '../../backend/user-stories/daily/get-daily-entry-times/get-daily-entry-times';
+import { CategoryEntry, DefaultCategories } from '../../backend/entities/DefaultCategories';
 
 dayjs.extend(objectSupport);
 
@@ -47,10 +48,7 @@ interface DayTimelineProps {
       email?: string | null;
     };
   } | null;
-  userCategories?: Array<{
-    name: string;
-    color?: string;
-  }>;
+  userCategories?: CategoryEntry[];
   selectedTimeEntries?: SelectedTimeEntry[] | null;
   refreshTrigger?: number;
 }
@@ -60,9 +58,9 @@ const DayTimeline = React.memo((props: DayTimelineProps) => {
   const isBelowMd = useMediaQuery(theme.breakpoints.down('md'));
   const [userDayTimeEntries, setUserDayTimeEntries] = useState([{"category": "", "time": ""}]);
 
-  const categoryColorMap = useMemo(() => {
-    if (!props.userCategories) return new Map();
-    return new Map(props.userCategories.map(category => [category.name, category.color]));
+  const categoryMap = useMemo(() => {
+    if (!props.userCategories) return new Map<string, CategoryEntry>(DefaultCategories.map(category => [category.id, category]));
+    return new Map(props.userCategories.map(category => [category.id, category]));
   }, [props.userCategories]);
 
   const sortTimeEntriesByTime = useCallback((timeEntries: any) => {
@@ -76,9 +74,13 @@ const DayTimeline = React.memo((props: DayTimelineProps) => {
     return dayjs(selectedDate.format("YYYY-MM-DD")+timeString).format("hh:mm A");
   }, []);
 
-  const getCategoryColorByName = useCallback((name: string) => {
-    return categoryColorMap.get(name);
-  }, [categoryColorMap]);
+  const getCategoryColorById = useCallback((id: string) => {
+    return categoryMap.get(id)?.color;
+  }, [categoryMap]);
+
+  const getCategoryNameById = useCallback((id: string) => {
+    return categoryMap.get(id)?.name || id;
+  }, [categoryMap]);
 
   const convertSelectedTimeEntries = useCallback((selectedTimeEntries: SelectedTimeEntry[]) => {
     return selectedTimeEntries.map((timeEntry: SelectedTimeEntry) => {
@@ -152,11 +154,11 @@ const DayTimeline = React.memo((props: DayTimelineProps) => {
   );
 
   const determineTimelineDotSX =  useCallback((timeEntry: TimeEntry) => {
-    const existingTimeEntrySX = {backgroundColor: getCategoryColorByName(timeEntry?.category)}
-    const selectedTimeEntrySX = {borderColor: getCategoryColorByName(timeEntry?.category)}
+    const existingTimeEntrySX = {backgroundColor: getCategoryColorById(timeEntry?.category)}
+    const selectedTimeEntrySX = {borderColor: getCategoryColorById(timeEntry?.category)}
     if(!timeEntry.type){return existingTimeEntrySX}
     return (timeEntry.type == "selected" ? selectedTimeEntrySX : existingTimeEntrySX);
-  }, []);
+  }, [getCategoryColorById]);
 
   return (
     <div className={`${styles.DayTimeline} ${isBelowMd ? styles.stretch : ''}`}>
@@ -178,7 +180,7 @@ const DayTimeline = React.memo((props: DayTimelineProps) => {
           return(
             <div key={index}>
             <TimelineItem>
-              <TimelineOppositeContent>{timeEntry.category}</TimelineOppositeContent>
+              <TimelineOppositeContent>{getCategoryNameById(timeEntry.category)}</TimelineOppositeContent>
               <TimelineSeparator>
                 <TimelineDot sx={determineTimelineDotSX(timeEntry)} />
                 {(index + 1 != length) && <TimelineConnector />}
@@ -207,7 +209,7 @@ const DayTimeline = React.memo((props: DayTimelineProps) => {
           return(
             <div key={userDayTimeEntries.length / 2 + index}>
             <TimelineItem>
-              <TimelineOppositeContent>{timeEntry.category}</TimelineOppositeContent>
+              <TimelineOppositeContent>{getCategoryNameById(timeEntry.category)}</TimelineOppositeContent>
               <TimelineSeparator>
                 <TimelineDot sx={determineTimelineDotSX(timeEntry)} />
                 {(index + 1 != length) && <TimelineConnector />}

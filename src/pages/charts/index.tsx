@@ -278,7 +278,6 @@ export default function ChartsPage() {
                 }
             });
         });
-
         return Object.values(combinedMap);
     }, [dayEntries]);
 
@@ -297,6 +296,11 @@ export default function ChartsPage() {
 
     const getTotalTimeEntriesHoursByCategory = useCallback((category: string, entry: WeekEntry | DayOfWeekEntry | HourlyEntry): number => {
         if (!entry.timeEntries) { return 0; }
+
+        // Find the category index by name
+        const categoryIndex = userCategories.findIndex(cat => cat.name === category);
+        if (categoryIndex === -1) { return 0; }
+        
         // Handles both nested arrays (WeekEntry) and flat arrays (DayOfWeekEntry, HourlyEntry)
         let count = 0;
         const timeEntries = entry.timeEntries;
@@ -308,15 +312,20 @@ export default function ChartsPage() {
                 // Nested array case (WeekEntry)
                 for (let j = 0; j < timeEntry.length; j++) {
                     const nestedTimeEntry = timeEntry[j];
-                    if (nestedTimeEntry && nestedTimeEntry.category === category) { count++; }
+                    if (nestedTimeEntry && (typeof nestedTimeEntry.category === 'number' ? nestedTimeEntry.category : Number(nestedTimeEntry.category)) === categoryIndex) { count++; }
                 }
-            } else if (timeEntry && timeEntry.category === category) { count++; } // Flat array case (DayOfWeekEntry, HourlyEntry)
+            } else if (timeEntry && (typeof timeEntry.category === 'number' ? timeEntry.category : Number(timeEntry.category)) === categoryIndex) { count++; } // Flat array case (DayOfWeekEntry, HourlyEntry)
         }
         return count / 2;
-    }, []);
+    }, [userCategories]);
 
     const getAverageTimeEntriesHoursByCategory = useCallback((category: string, entry: WeekEntry | DayOfWeekEntry | HourlyEntry, chartType: ChartType): number => {
         if (!entry.timeEntries) { return 0; }
+        
+        // Find the category index by name
+        const categoryIndex = userCategories.findIndex(cat => cat.name === category);
+        if (categoryIndex === -1) { return 0; }
+        
         let totalTimeEntries = 0;
         if(chartType === ChartType.WEEKLY) {
             totalTimeEntries = 14;
@@ -334,13 +343,13 @@ export default function ChartsPage() {
                 // Nested array case (WeekEntry)
                 for (let j = 0; j < timeEntry.length; j++) {
                     const nestedTimeEntry = timeEntry[j];
-                    if (nestedTimeEntry && nestedTimeEntry.category === category) { count++; }
+                    if (nestedTimeEntry && (typeof nestedTimeEntry.category === 'number' ? nestedTimeEntry.category : Number(nestedTimeEntry.category)) === categoryIndex) { count++; }
                 }
-            } else if (timeEntry && timeEntry.category === category) { count++; } // Flat array case (DayOfWeekEntry, HourlyEntry)
+            } else if (timeEntry && (typeof timeEntry.category === 'number' ? timeEntry.category : Number(timeEntry.category)) === categoryIndex) { count++; } // Flat array case (DayOfWeekEntry, HourlyEntry)
         }
         if (totalTimeEntries === 0) { return 0; }
         return count / totalTimeEntries;
-    }, [isSelectedYearLeapYear]);
+    }, [isSelectedYearLeapYear, userCategories]);
 
     const createPieChartData = useCallback((entries: DayOfWeekEntry[] | HourlyEntry[]): PieChartData[] => {
         const data: PieChartData[] = [];
@@ -348,10 +357,10 @@ export default function ChartsPage() {
         
         const allTimeEntries = entries.flatMap((entry) => entry.timeEntries || []);
         
-        userCategories.forEach((categoryEntry, index) => {
-            const count = allTimeEntries.filter((timeEntry) => timeEntry && timeEntry.category === categoryEntry.name).length;
+        userCategories.forEach((categoryEntry) => {
+            const count = allTimeEntries.filter((timeEntry) => timeEntry && (typeof timeEntry.category === 'number' ? timeEntry.category : Number(timeEntry.category)) === Number(categoryEntry.id)).length;
             data.push({ 
-                id: index, 
+                id: Number(categoryEntry.id), 
                 value: count / 2, 
                 label: categoryEntry.name, 
                 color: categoryEntry.color 

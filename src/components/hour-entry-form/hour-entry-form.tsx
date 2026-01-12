@@ -12,6 +12,7 @@ import RemoveCircleOutlineIcon from '@mui/icons-material/RemoveCircleOutline';
 import ControlPointDuplicateIcon from '@mui/icons-material/ControlPointDuplicate';
 import HighlightOffIcon from '@mui/icons-material/HighlightOff';
 import { AddDayEntry } from '../../backend/user-stories/daily/add-daily-entry/add-daily-entry';
+import { CategoryEntry } from '../../backend/entities/DefaultCategories';
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -65,10 +66,7 @@ interface HourEntryFormProps {
   onSelectedDateChange: (date: dayjs.Dayjs) => void;
   timeEntries: TimeEntry[];
   onTimeEntriesChange: (timeEntries: TimeEntry[]) => void;
-  userCategories: Array<{
-    name: string;
-    color?: string;
-  }>;
+  userCategories: CategoryEntry[];
   userData?: {
     user?: {
       email?: string | null;
@@ -89,7 +87,7 @@ const HourEntryForm = ({
   const numTimeSlots = timeEntries.length;
 
   const getCategoryValue = useCallback((category: any): string => {
-    return typeof category === 'string' ? category : category.name;
+    return typeof category === 'string' ? category : category.id;
   }, []);
 
   const usedTimes = useMemo(() => {
@@ -334,17 +332,21 @@ const HourEntryForm = ({
                               key={index}
                               value={formEntry.category}
                               onChange={(event)=> {updateTimeEntries(createTimeEntryOnChangeEvent("category", event.target.value, index))}}
-                              renderValue={(value) => (
-                                <span style={{ 
-                                  overflow: 'hidden',
-                                  textOverflow: 'ellipsis',
-                                  whiteSpace: 'nowrap',
-                                  display: 'block',
-                                  maxWidth: '166px'
-                                }}>
-                                  {value}
-                                </span>
-                              )}
+                              renderValue={(value) => {
+                                const category = userCategories.find(cat => cat.id === value);
+                                const displayName = category?.name || value;
+                                return (
+                                  <span style={{ 
+                                    overflow: 'hidden',
+                                    textOverflow: 'ellipsis',
+                                    whiteSpace: 'nowrap',
+                                    display: 'block',
+                                    maxWidth: '166px'
+                                  }}>
+                                    {displayName}
+                                  </span>
+                                );
+                              }}
                               sx={{ 
                                 width: '100%',
                                 maxWidth: '196px',
@@ -357,7 +359,7 @@ const HourEntryForm = ({
                             >
                               {userCategories.map(function (element, catIndex) {
                                   return (
-                                    <MenuItem key={catIndex} value={element.name}>
+                                    <MenuItem key={catIndex} value={element.id}>
                                       <ListItemText primary={element.name} />
                                     </MenuItem>
                                   );

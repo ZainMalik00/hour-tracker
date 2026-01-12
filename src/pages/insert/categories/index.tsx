@@ -60,7 +60,7 @@ export default function InsertPage() {
 
   const handleAddCategory = useCallback(() => {
     startTransition(() => {
-      const newId = (parseInt(userCategories[userCategories.length - 1].id) + 1).toString();
+      const newId = (Number(userCategories[userCategories.length - 1].id) + 1).toString();
       const randomColor = "#" + Math.floor(Math.random()*16777215).toString(16).padStart(6, '0');
       const newCategory = { id: newId, name: "New Category " + newId, color: randomColor, description: "New Category Description" };
       setUserCategories((prevCategories) => {
