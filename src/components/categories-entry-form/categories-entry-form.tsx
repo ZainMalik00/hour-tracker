@@ -8,12 +8,14 @@ interface CategoriesEntryFormProps {
   selectedCategory: CategoryEntry | null;
   onSelectedCategoryChange: (category: CategoryEntry) => void;
   onCategoryChange: (category: CategoryEntry) => void;
+  onRemoveCategory: (category: CategoryEntry) => void;
 }
 
 const CategoriesEntryForm = ({
   selectedCategory,
   onSelectedCategoryChange,
   onCategoryChange,
+  onRemoveCategory,
 }: CategoriesEntryFormProps) => {       
   
   const handleNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -98,9 +100,10 @@ const CategoriesEntryForm = ({
                 </Popover>
               </div>
             )}
-          </PopupState>   
+          </PopupState>
         </div>
         }
+        {selectedCategory && <Button variant="outlined" color="error" onClick={() => onRemoveCategory(selectedCategory)}>Delete</Button>}
       </div>
       <Typography variant="h6">Description:</Typography>
       <TextField

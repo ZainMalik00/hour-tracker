@@ -11,6 +11,7 @@ interface CategoriesPageContainerProps {
     onUserCategoriesChange: (categories: CategoryEntry[]) => void;
     onCategoryChange: (category: CategoryEntry) => void;
     onAddCategory: () => void;
+    onRemoveCategory: (category: CategoryEntry) => void;
 }
 
 const CategoriesPageContainer = ({ 
@@ -19,7 +20,8 @@ const CategoriesPageContainer = ({
   userCategories, 
   onUserCategoriesChange, 
   onCategoryChange,
-  onAddCategory 
+  onAddCategory,  
+  onRemoveCategory,
 }: CategoriesPageContainerProps) => {
   const theme = useTheme();
   const isBelowMd = useMediaQuery(theme.breakpoints.down('md'));
@@ -65,6 +67,7 @@ const CategoriesPageContainer = ({
                 selectedCategory={selectedCategory}
                 onSelectedCategoryChange={onSelectedCategoryChange}
                 onCategoryChange={onCategoryChange}
+                onRemoveCategory={onRemoveCategory}
             />
         </div>
     )

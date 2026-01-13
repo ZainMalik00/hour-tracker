@@ -1,14 +1,14 @@
-import React, { startTransition, useCallback, useEffect, useMemo, useRef } from 'react'; 
-import InsertPageContainer from '../../../components/page-containers/insert-page-container/insert-page-container';
-import { Box, Button, FormControl, InputLabel, MenuItem, Select, Typography } from '@mui/material';
+import React, { startTransition, useCallback, useEffect, useMemo, useRef, useState } from 'react'; 
+import { Box, Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, FormControl, InputLabel, MenuItem, Select, Snackbar, Typography } from '@mui/material';
 import { PageContainer, PageHeader, PageHeaderToolbar } from '@toolpad/core/PageContainer';
-import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers';
-import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { useSession } from 'next-auth/react';
 import { GetCategories } from '../../../backend/user-stories/categories/get-categories/get-categories';
-import dayjs from 'dayjs';
 import { CategoryEntry } from '../../../backend/entities/DefaultCategories';
 import CategoriesPageContainer from '../../../components/page-containers/categories-page-container/categories-page-container';
+import { DayEntry } from '../../charts';
+import { GetDays } from '../../../backend/user-stories/daily/get-daily-entries/get-daily-entries';
+import { TimeEntry } from '../../../components/hour-entry-form/hour-entry-form';
+import { UpdateCategories } from '../../../backend/user-stories/categories/update-categories/update-categories';
 
 function CustomPageToolbar({ sortBy, onSortByChange }: { sortBy: string; onSortByChange: (value: string) => void }) {
   return (
@@ -32,7 +32,7 @@ function CustomPageToolbar({ sortBy, onSortByChange }: { sortBy: string; onSortB
 }
 
 function CustomPageHeader({ sortBy, onSortByChange }: { sortBy: string; onSortByChange: (value: string) => void }) {
-  const CustomPageToolbarComponent = React.useCallback(
+  const CustomPageToolbarComponent = useCallback(
     () => <CustomPageToolbar sortBy={sortBy} onSortByChange={onSortByChange} />,
     [],
   );
@@ -42,10 +42,15 @@ function CustomPageHeader({ sortBy, onSortByChange }: { sortBy: string; onSortBy
 
 export default function InsertCategoriesPage() {
   const { data: userData } = useSession();
-  const [ userCategories, setUserCategories ] = React.useState<CategoryEntry[]>([]);
-  const [ categoriesLength, setCategoriesLength ] = React.useState<number>(0);
-  const [ selectedCategory, setSelectedCategory ] = React.useState<CategoryEntry | null>(null);
-  const [ sortBy, setSortBy ] = React.useState<string>("lastAdded");
+  const [ userCategories, setUserCategories ] = useState<CategoryEntry[]>([]);
+  const [ categoriesLength, setCategoriesLength ] = useState<number>(0);
+  const [ selectedCategory, setSelectedCategory ] = useState<CategoryEntry | null>(null);
+  const [ sortBy, setSortBy ] = useState<string>("lastAdded");
+  const [ userDayEntries, setUserDayEntries ] = useState<DayEntry[]>([]);
+  const [ openSnackbar, setOpenSnackbar ] = useState<boolean>(false);
+  const [ openDialog, setOpenDialog ] = useState<boolean>(false);
+  const [ agreeToDialog, setAgreeToDialog ] = useState<boolean>(false);
+
   const selectedCategoryRef = useRef<CategoryEntry | null>(null);
   const isUserSignedIn = !!userData?.user?.email;
   const isSubmitDisabled = categoriesLength == 0 || !isUserSignedIn;
@@ -62,6 +67,14 @@ export default function InsertCategoriesPage() {
     return sortedCategories;
   }, [userCategories]);
 
+  const categoryInstanceMap = useMemo(() => {
+    const map = new Map<string, number>();
+    userDayEntries.flatMap((dayEntry) => dayEntry.timeEntries).forEach((timeEntry: TimeEntry) => {
+      map.set(timeEntry.category, (map.get(timeEntry.category) || 0) + 1);
+    });
+    return map;
+  }, [userDayEntries]);
+
   useEffect(() => {
     if (!userData?.user?.email) { return; }
     GetCategories(userData?.user?.email).then((categories) => { 
@@ -72,6 +85,9 @@ export default function InsertCategoriesPage() {
       }
       setUserCategories(categories);
       setCategoriesLength(categories.length);
+    });
+    GetDays(userData?.user?.email).then((dayEntries) => {
+      setUserDayEntries(dayEntries);
     });
   }, [userData?.user?.email]);
 
@@ -106,9 +122,7 @@ export default function InsertCategoriesPage() {
       const newId = (Number(userCategories[userCategories.length - 1].id) + 1).toString();
       const randomColor = "#" + Math.floor(Math.random()*16777215).toString(16).padStart(6, '0');
       const newCategory = { id: newId, name: "New Category " + newId, color: randomColor, description: "New Category Description" };
-      setUserCategories((prevCategories) => {
-        return [...prevCategories, newCategory];
-      });
+      setUserCategories((prevCategories) => { return [...prevCategories, newCategory]; });
       setSelectedCategory(newCategory);
       setCategoriesLength(prevLength => prevLength + 1);
       selectedCategoryRef.current = newCategory;
@@ -122,6 +136,28 @@ export default function InsertCategoriesPage() {
     [sortBy, handleSortByChange],
   );
 
+ const handleRemoveCategory = useCallback((category: CategoryEntry) => {
+  const categoryInstanceCount = categoryInstanceMap.get(category.id) || 0;
+  if (categoryInstanceCount > 0) { return setOpenSnackbar(true); }
+  setOpenDialog(true);
+
+ }, [categoryInstanceMap, userCategories, setUserCategories, setCategoriesLength, setSelectedCategory, selectedCategoryRef]);
+
+  const handleAgreeToDialog = useCallback(() => { 
+    setUserCategories((prevCategories) => { return prevCategories.filter((c) => c.id !== selectedCategory?.id); });
+    setCategoriesLength(prevLength => prevLength - 1);
+    setSelectedCategory(null);
+    selectedCategoryRef.current = null;
+    setAgreeToDialog(false);
+    setOpenDialog(false);
+  }, [selectedCategory, setUserCategories, setCategoriesLength, setSelectedCategory, selectedCategoryRef]);
+
+
+  const handleSubmit = useCallback(() => {
+    if (!userData?.user?.email) { return; }
+    UpdateCategories(userData?.user?.email, userCategories);
+  }, [userData?.user?.email, userCategories]);
+
   return (
     <div>
       <PageContainer slots={{ header: CustomPageHeaderComponent }} sx={{ minHeight: 'calc(100vh - 128px)' }}>
@@ -132,9 +168,10 @@ export default function InsertCategoriesPage() {
           onUserCategoriesChange={handleUserCategoriesChange} 
           onCategoryChange={handleCategoryChange} 
           onAddCategory={handleAddCategory} 
+          onRemoveCategory={handleRemoveCategory}
         />
       </PageContainer>
-      {/* <Box sx={{ position: 'sticky', bottom: 0, left: 0, right: 0, scrollbarGutter: "auto", backgroundColor: 'primary.contrastText'}}>
+      <Box sx={{ position: 'sticky', bottom: 0, left: 0, right: 0, scrollbarGutter: "auto", backgroundColor: 'primary.contrastText'}}>
         <div style={{ 
           display: "flex", 
           justifyContent: "flex-end",
@@ -147,12 +184,35 @@ export default function InsertCategoriesPage() {
           paddingRight: "calc( var(--mui-spacing) * 2)"
           }}>
           {!isUserSignedIn && (
-            <Typography variant="body2" color="text.secondary">*Must be Signed-In to Insert</Typography>
+            <Typography variant="body2" color="text.secondary">*Must be Signed-In to Modify Categories</Typography>
           )}
           {isUserSignedIn && <div />}
-          <Button variant="contained" size='large' type='submit' form="hour-entry-form" id="submit-button" disabled={isSubmitDisabled}>Submit</Button>
+          <Button variant="contained" size='large' id="submit-button" disabled={isSubmitDisabled} onClick={handleSubmit}>Submit</Button>
         </div>
-      </Box> */}
+      </Box>
+      <Snackbar
+        open={openSnackbar}
+        autoHideDuration={5000}
+        onClose={() => setOpenSnackbar(false)}
+        message="Cannot remove category with time entries"
+      />
+      <Dialog
+        open={openDialog}
+        onClose={() => setOpenDialog(false)}
+        aria-labelledby="alert-dialog-title"
+        aria-describedby="alert-dialog-description"
+      >
+        <DialogTitle id="alert-dialog-title">
+          {"Are you sure you want to delete this category?"}
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText id="alert-dialog-description">Deleting a category will delete it permanently after submitting.</DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenDialog(false)}>Disagree</Button>
+          <Button onClick={handleAgreeToDialog} autoFocus> Agree </Button>
+        </DialogActions>
+      </Dialog>
     </div>
     );
 }
