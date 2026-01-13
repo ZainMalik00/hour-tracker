@@ -5,6 +5,7 @@ import { DashboardLayout } from '@toolpad/core/DashboardLayout';
 import Head from 'next/head';
 import { AppCacheProvider } from '@mui/material-nextjs/v14-pagesRouter';
 import DashboardIcon from '@mui/icons-material/Dashboard';
+import ArticleIcon from '@mui/icons-material/Article';
 import BarChartIcon from '@mui/icons-material/BarChart';
 import QueryStatsIcon from '@mui/icons-material/QueryStats';
 import ViewTimelineIcon from '@mui/icons-material/ViewTimeline';
@@ -31,6 +32,11 @@ const NAVIGATION: Navigation = [
     title: 'Insert',
     icon: <DashboardIcon />,
     children: [{
+      segment: 'time-entries',
+      title: 'Time Entries',
+      icon: <ArticleIcon />,
+    },
+    {
       segment: 'categories',
       title: 'Categories',
       icon: <PaletteIcon />  

@@ -1,0 +1,12 @@
+.PageContents {
+    display: flex;
+    flex-direction: row;
+    gap: calc(var(--mui-spacing) * 2);
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+.PageContents.column {
+    flex-direction: column;
+    gap: calc(var(--mui-spacing) * 4);
+}
