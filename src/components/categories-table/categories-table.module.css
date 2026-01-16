@@ -1,0 +1,26 @@
+.tableContainer {
+  max-height: calc(68vh - var(--mui-spacing));
+  min-width: 280px;
+  width: 30%;
+  overflow: auto;
+}
+
+.categoryCell {
+  max-width: 196px;
+  width: 196px;
+}
+
+.hoursCell {
+  max-width: 86px;
+  width: 86px;
+}
+
+.categoryCellContent {
+  display: flex;
+  align-items: center;
+}
+
+.categoryColorIndicator {
+  max-width: 10px;
+  margin-right: calc(var(--mui-spacing) / 2);
+}

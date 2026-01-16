@@ -194,7 +194,7 @@ export default function InsertCategoriesPage() {
         open={openSnackbar}
         autoHideDuration={5000}
         onClose={() => setOpenSnackbar(false)}
-        message="Cannot remove category with time entries"
+        message="Cannot remove a category with existing time entries"
       />
       <Dialog
         open={openDialog}
