@@ -1,7 +1,7 @@
 .tableContainer {
   max-height: calc(68vh - var(--mui-spacing));
   min-width: 280px;
-  width: 30%;
+  width: 100%;
   overflow: auto;
 }
 

@@ -9,6 +9,8 @@ import { DayEntry } from '../charts';
 import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import CategoriesTable from '../../components/categories-table/categories-table';
+import TimelineComponent from '../../components/timeline/timeline';
+import { Box, Card, Typography } from '@mui/material';
 
 function CustomPageToolbar({ selectedDate, onSelectedDateChange }: { selectedDate: dayjs.Dayjs; onSelectedDateChange: (date: dayjs.Dayjs) => void }) {
 
@@ -65,11 +67,27 @@ export default function AnalyticsPage() {
 
   return(
     <PageContainer slots={{ header: CustomPageHeaderComponent }}  sx={{ minHeight: 'calc(100vh - 128px)' }}>
-      <CategoriesTable 
-        userCategories={userCategories}
-        userDayEntries={userDayEntries}
-        selectedDate={selectedDate}
-      />
+      <div style={{ display: 'flex', flexDirection: 'row', gap: `calc(var(--mui-spacing) * 2)` }}>
+        <Card style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', backgroundColor: "transparent", width: '20%', minWidth: "280px" }}>
+          <CategoriesTable 
+            userCategories={userCategories}
+            userDayEntries={userDayEntries}
+            selectedDate={selectedDate}
+          />
+        </Card>
+        <Card style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', backgroundColor: "transparent", minWidth: '340px' }}>
+        <Box sx={{ backgroundColor: "primary.main", width: '100%', display: 'flex', justifyContent: 'center', padding: `calc(var(--mui-spacing) / 2) 0` }}>
+          <Typography variant="h6" sx={{ fontWeight: 'bold' }}>Average Day</Typography>
+        </Box>
+        <div style={{ maxHeight: 'calc(68vh - var(--mui-spacing) - 32px)', overflow: 'auto', width: '20%', minWidth: '340px' }}>
+          <TimelineComponent 
+            userCategories={userCategories}
+            userDayEntries={userDayEntries}
+            selectedDate={selectedDate}
+          />
+        </div>
+        </Card>
+      </div>
     </PageContainer>
   );
 

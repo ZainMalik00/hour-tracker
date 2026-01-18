@@ -1,0 +1,15 @@
+.timeline :global(.MuiTimelineContent-root) {
+  flex: 0.5;
+}
+
+.timeline :global(.MuiTimelineOppositeContent-root) {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+  min-width: 0;
+}
+
+.timelineDot {
+  background-color: var(--category-color) !important;
+}
