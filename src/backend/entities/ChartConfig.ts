@@ -4,3 +4,10 @@ export interface ChartConfig {
   sumType: "total" | "average";
   type: "bar" | "line";
 }
+
+export interface PieChartData {
+  id: number;
+  value: number;
+  label: string;
+  color: string;
+}

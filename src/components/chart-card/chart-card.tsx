@@ -5,9 +5,8 @@ import { LineChart } from '@mui/x-charts';
 import CloseIcon from '@mui/icons-material/Close';
 import styles from './chart-card.module.css';
 import { ChartConfig } from '../../backend/entities/ChartConfig';
-import { DayOfWeekEntry, WeekEntry } from '../charts-grid/charts-grid';
+import { DayOfWeekEntry, WeekEntry, HourlyEntry } from '../../backend/entities/Entries';
 import { ChartType } from '../../backend/services/chart-service';
-import { HourlyEntry } from '../../pages/charts';
 
 export interface ChartCardProps {
   index: number;

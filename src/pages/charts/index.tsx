@@ -1,52 +1,26 @@
 import React, { useCallback, useEffect, useState, useMemo, useRef } from 'react';
 import { PageContainer, PageHeader, PageHeaderToolbar } from '@toolpad/core/PageContainer';
 import { useSession } from 'next-auth/react';
-import { TimeEntry } from '../../components/hour-entry-form/hour-entry-form';
+import { TimeEntry } from '../../backend/entities/Entries';
 import { GetDays } from '../../backend/user-stories/daily/get-daily-entries/get-daily-entries';
 import { Box, Button, Card, Divider, Typography } from '@mui/material';
 import { GetCategories } from '../../backend/user-stories/categories/get-categories/get-categories';
 import { DefaultCategories } from '../../backend/entities/DefaultCategories';
-import { GetChartConfigs } from '../../backend/user-stories/charts/get-chart-configs.ts/get-chart-configs';
+import { GetChartConfigs } from '../../backend/user-stories/charts/get-chart-configs/get-chart-configs';
 import { UpdateChartConfigs } from '../../backend/user-stories/charts/update-chart-configs/update-chart-configs';
 import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import dayjs from 'dayjs';
 import isLeapYear from 'dayjs/plugin/isLeapYear';
-import { ChartConfig } from '../../backend/entities/ChartConfig';
+import { ChartConfig, PieChartData } from '../../backend/entities/ChartConfig';
 import DesignServicesIcon from '@mui/icons-material/DesignServices';
 import ChartsGrid from '../../components/charts-grid/charts-grid';
 import { ChartType } from '../../backend/services/chart-service';
 import { DefaultizedPieValueType, PieChart } from '@mui/x-charts';
+import { CreateWeekEntries } from '../../backend/user-stories/charts/create-chart-data/create-week-entries/create-week-entries';
+import { DayEntry, WeekEntry, DayOfWeekEntry, HourlyEntry } from '../../backend/entities/Entries';
 
 dayjs.extend(isLeapYear);
-export interface DayEntry {
-  date: string;
-  dayOfWeek: string;
-  week: number;
-  timeEntries: TimeEntry[] | null;
-} 
-
-export interface WeekEntry {
-  week: number;
-  timeEntries: TimeEntry[] | null;
-}
-
-export interface DayOfWeekEntry {
-  dayOfWeek: number;
-  timeEntries: TimeEntry[] | null;
-}
-
-export interface HourlyEntry {
-  hour: string;
-  timeEntries: TimeEntry[] | null;
-}
-
-export interface PieChartData {
-  id: number;
-  value: number;
-  label: string;
-  color: string;
-}
 
 function CustomPageToolbar({ selectedDate, onSelectedDateChange, isEditing, toggleIsEditing }: { selectedDate: dayjs.Dayjs; onSelectedDateChange: (date: dayjs.Dayjs) => void; isEditing: boolean; toggleIsEditing: () => void }) {
 
@@ -76,7 +50,7 @@ function CustomPageToolbar({ selectedDate, onSelectedDateChange, isEditing, togg
   }
   
   function CustomPageHeader({ status, selectedDate, onSelectedDateChange, isEditing, toggleIsEditing }: { status: string; selectedDate: dayjs.Dayjs; onSelectedDateChange: (date: dayjs.Dayjs) => void; isEditing: boolean; toggleIsEditing: () => void }) {
-    const CustomPageToolbarComponent = React.useCallback(
+    const CustomPageToolbarComponent = useCallback(
       () => <CustomPageToolbar selectedDate={selectedDate} onSelectedDateChange={onSelectedDateChange} isEditing={isEditing} toggleIsEditing={toggleIsEditing} />,
       [status, selectedDate, onSelectedDateChange, isEditing, toggleIsEditing],
     );
@@ -100,9 +74,7 @@ export default function ChartsPage() {
     const lastSavedDailyChartConfigsRef = useRef<ChartConfig[]>([]);
     const lastSavedHourlyChartConfigsRef = useRef<ChartConfig[]>([]);
 
-    const handleSelectedDateChange = React.useCallback((date: dayjs.Dayjs) => {
-        setSelectedDate(date.year());
-    }, []);
+    const handleSelectedDateChange = useCallback((date: dayjs.Dayjs) => { setSelectedDate(date.year()); }, []);
 
     const areChartConfigsEqual = useCallback((configs1: ChartConfig[], configs2: ChartConfig[]): boolean => {
         if (configs1.length !== configs2.length) {
@@ -117,7 +89,7 @@ export default function ChartsPage() {
         });
     }, []);
 
-    const updateChartConfigs = React.useCallback(async () => {
+    const updateChartConfigs = useCallback(async () => {
         if(!userData?.user?.email){ return; }
 
         const isDailyConfigsEqual = areChartConfigsEqual(dailyChartConfigs, lastSavedDailyChartConfigsRef.current);
@@ -143,61 +115,18 @@ export default function ChartsPage() {
         }
     }, [userData?.user?.email, weeklyChartConfigs, dailyChartConfigs, hourlyChartConfigs, areChartConfigsEqual]);
 
-    const toggleIsEditing = React.useCallback(async () => {
+    const toggleIsEditing = useCallback(async () => {
         if (isEditing) { await updateChartConfigs(); }
         setIsEditing(prev => !prev);
     }, [isEditing, updateChartConfigs]);
 
-    const CustomPageHeaderComponent = React.useCallback(
+    const CustomPageHeaderComponent = useCallback(
         () => <CustomPageHeader status="" selectedDate={dayjs().year(selectedDate)} onSelectedDateChange={handleSelectedDateChange} isEditing={isEditing} toggleIsEditing={toggleIsEditing} />,
         [selectedDate, handleSelectedDateChange, isEditing, toggleIsEditing],
     );
 
-    const getCorrectWeek = useCallback((dayEntry: DayEntry) => {
-        const month = dayEntry.date.substring(5, 7);
-        if(month === "12" && dayEntry.week === 1 ){ return 53; }
-        if(month === "12" && dayEntry.week === 2 ){ return 54; }
-        return dayEntry.week;
-    }, []);
-
     const createWeekEntries = useCallback((dayEntries: DayEntry[], year: number): any[] => {
-        // Initialize combinedMap with minimum 52 weeks (always include weeks 1-52)
-        const combinedMap: { [key: number]: any } = {};
-        for (let week = 1; week <= 52; week++) {
-            combinedMap[week] = {
-                week: week,
-                timeEntries: null
-            };
-        }
-        
-        if (!dayEntries || dayEntries.length === 0) { return Object.values(combinedMap); }
-
-        const yearString = year.toString();
-        const filteredEntries = dayEntries.filter(dayEntry => dayEntry.date.substring(0, 4) === yearString); // substring is the year
-
-        filteredEntries.forEach((dayEntry) => {
-            const commonWeek = getCorrectWeek(dayEntry);
-            dayEntry.week = commonWeek;
-
-            if (commonWeek >= 1 && commonWeek <= 54) {
-                // Add week 53 or 54 to map if not already present
-                if (commonWeek === 53 && !combinedMap[53]) {
-                    combinedMap[53] = { week: 53, timeEntries: null };
-                }
-                if (commonWeek === 54 && !combinedMap[54]) {
-                    combinedMap[54] = { week: 54, timeEntries: null };
-                }
-                
-                if (!combinedMap[commonWeek].timeEntries) {
-                    const { date, dayOfWeek, ...dayEntryReduced } = dayEntry;
-                    combinedMap[commonWeek].timeEntries = [dayEntryReduced.timeEntries];
-                } else {
-                    combinedMap[commonWeek].timeEntries.push(dayEntry.timeEntries);
-                }
-            }
-        });
-
-        return Object.values(combinedMap);
+        return CreateWeekEntries(dayEntries, year);
     }, []);
 
     const createDayOfWeekEntries = useCallback((dayEntries: DayEntry[], year: number): DayOfWeekEntry[] => { 

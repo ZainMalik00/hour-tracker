@@ -6,17 +6,7 @@ import { ChartConfig } from '../../backend/entities/ChartConfig';
 import styles from './charts-grid.module.css';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { ChartType } from '../../backend/services/chart-service';
-import { HourlyEntry } from '../../pages/charts';
-
-export interface WeekEntry {
-  week: number;
-  timeEntries: any[] | null;
-}
-
-export interface DayOfWeekEntry {
-  dayOfWeek: number;
-  timeEntries: any[] | null;
-}
+import { HourlyEntry, WeekEntry, DayOfWeekEntry } from '../../backend/entities/Entries';
 
 export interface ChartsGridProps {
   numOfCharts: number;

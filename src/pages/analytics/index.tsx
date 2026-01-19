@@ -5,7 +5,7 @@ import { PageContainer, PageHeader, PageHeaderToolbar } from '@toolpad/core/Page
 import { GetCategories } from '../../backend/user-stories/categories/get-categories/get-categories';
 import { GetDays } from '../../backend/user-stories/daily/get-daily-entries/get-daily-entries';
 import { CategoryEntry } from '../../backend/entities/DefaultCategories';
-import { DayEntry } from '../charts';
+import { DayEntry } from '../../backend/entities/Entries';
 import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import CategoriesTable from '../../components/categories-table/categories-table';

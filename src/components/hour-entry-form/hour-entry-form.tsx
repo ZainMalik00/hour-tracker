@@ -13,16 +13,11 @@ import ControlPointDuplicateIcon from '@mui/icons-material/ControlPointDuplicate
 import HighlightOffIcon from '@mui/icons-material/HighlightOff';
 import { AddDayEntry } from '../../backend/user-stories/daily/add-daily-entry/add-daily-entry';
 import { CategoryEntry } from '../../backend/entities/DefaultCategories';
+import { TimeEntry } from '../../backend/entities/Entries';
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
 dayjs.extend(objectSupport);
-
-export interface TimeEntry {
-  category: string;
-  time: dayjs.Dayjs;
-  timezone: string;
-} 
 
 const TIMEZONES = Intl.supportedValuesOf("timeZone");
 const DEFAULT_TIMEZONE = Intl.DateTimeFormat().resolvedOptions().timeZone;

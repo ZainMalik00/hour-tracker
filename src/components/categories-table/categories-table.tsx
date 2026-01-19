@@ -2,8 +2,8 @@ import { useCallback, useMemo, useState } from 'react';
 import dayjs from 'dayjs';
 import { styled, Table, TableBody, TableCell, tableCellClasses, TableContainer, TableHead, TableRow, TableSortLabel } from '@mui/material';
 import { CategoryEntry } from '../../backend/entities/DefaultCategories';
-import { DayEntry } from '../../pages/charts';
-import { TimeEntry } from '../hour-entry-form/hour-entry-form';
+import { DayEntry } from '../../backend/entities/Entries';
+import { TimeEntry } from '../../backend/entities/Entries';
 import styles from './categories-table.module.css';
 
 const StyledTableCell = styled(TableCell)(({ theme }) => ({

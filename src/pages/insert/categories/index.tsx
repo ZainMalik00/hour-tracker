@@ -5,9 +5,9 @@ import { useSession } from 'next-auth/react';
 import { GetCategories } from '../../../backend/user-stories/categories/get-categories/get-categories';
 import { CategoryEntry } from '../../../backend/entities/DefaultCategories';
 import CategoriesPageContainer from '../../../components/page-containers/categories-page-container/categories-page-container';
-import { DayEntry } from '../../charts';
+import { DayEntry } from '../../../backend/entities/Entries';
 import { GetDays } from '../../../backend/user-stories/daily/get-daily-entries/get-daily-entries';
-import { TimeEntry } from '../../../components/hour-entry-form/hour-entry-form';
+import { TimeEntry } from '../../../backend/entities/Entries';
 import { UpdateCategories } from '../../../backend/user-stories/categories/update-categories/update-categories';
 
 function CustomPageToolbar({ sortBy, onSortByChange }: { sortBy: string; onSortByChange: (value: string) => void }) {
