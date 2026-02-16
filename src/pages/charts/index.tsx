@@ -17,8 +17,12 @@ import DesignServicesIcon from '@mui/icons-material/DesignServices';
 import ChartsGrid from '../../components/charts-grid/charts-grid';
 import { ChartType } from '../../backend/services/chart-service';
 import { DefaultizedPieValueType, PieChart } from '@mui/x-charts';
-import { CreateWeekEntries } from '../../backend/user-stories/charts/create-chart-data/create-week-entries/create-week-entries';
+import { CreateWeekEntries } from '../../backend/user-stories/entries/create-week-entries/create-week-entries';
 import { DayEntry, WeekEntry, DayOfWeekEntry, HourlyEntry } from '../../backend/entities/Entries';
+import { CreateDayOfWeekEntries } from '../../backend/user-stories/entries/create-day-of-week-entries/create-day-of-week-entries';
+import { CreateHourlyEntries } from '../../backend/user-stories/entries/create-hourly-entries/create-hourly-entries';
+import { CreatePieChartData } from '../../backend/user-stories/charts/create-chart-data/create-pie-chart-data/create-pie-chart-data';
+import { CreateDayOfWeekEntriesBarChartData, CreateHourlyEntriesBarChartData, CreateWeekEntriesChartData } from '../../backend/user-stories/charts/create-chart-data/create-week-entries-chart-data/create-week-entries-chart-data';
 
 dayjs.extend(isLeapYear);
 
@@ -125,232 +129,34 @@ export default function ChartsPage() {
         [selectedDate, handleSelectedDateChange, isEditing, toggleIsEditing],
     );
 
-    const createWeekEntries = useCallback((dayEntries: DayEntry[], year: number): any[] => {
-        return CreateWeekEntries(dayEntries, year);
-    }, []);
+    const createWeekEntries = useCallback((dayEntries: DayEntry[], year: number): any[] => { return CreateWeekEntries(dayEntries, year); }, []);
 
-    const createDayOfWeekEntries = useCallback((dayEntries: DayEntry[], year: number): DayOfWeekEntry[] => { 
-        const yearString = year.toString();
-        const combinedMap: { [key: number]: DayOfWeekEntry } = {};
+    const createDayOfWeekEntries = useCallback((dayEntries: DayEntry[], year: number): DayOfWeekEntry[] => { return CreateDayOfWeekEntries(dayEntries, year); }, [dayEntries]);
 
-        for (let dayOfWeek = 0; dayOfWeek <= 6; dayOfWeek++) {
-            combinedMap[dayOfWeek] = {
-                dayOfWeek: dayOfWeek,
-                timeEntries: null
-            };
-        }
-        
-        dayEntries.forEach((dayEntry) => {
-            if (dayEntry.date.substring(0, 4) !== yearString) { return; }
-            
-            const entryDayOfWeek = typeof dayEntry.dayOfWeek === 'string' ? parseInt(dayEntry.dayOfWeek, 10) : dayEntry.dayOfWeek;
-            
-            // Validate dayOfWeek is in valid range
-            if (entryDayOfWeek >= 0 && entryDayOfWeek <= 6 && dayEntry.timeEntries !== null) {
-                const existingEntries = combinedMap[entryDayOfWeek].timeEntries;
-                if (existingEntries === null) {
-                    combinedMap[entryDayOfWeek].timeEntries = dayEntry.timeEntries.slice();
-                } else {
-                    combinedMap[entryDayOfWeek].timeEntries = existingEntries.concat(dayEntry.timeEntries);
-                }
-            }
-        });
-        
-        return Object.values(combinedMap) as DayOfWeekEntry[];
-    }, [dayEntries]);
-
-
-    const createHourlyEntries = useCallback((dayEntries: DayEntry[], year: number): HourlyEntry[] => {
-        const yearString = year.toString();
-        const combinedMap: { [key: number]: any } = {};
-        const timeIntervalToIndexMap = new Map<string, number>();
-        
-        for (let hour = 0; hour <= 47; hour+=2) {
-            const hourValue = hour / 2;
-            const hourStr = hourValue < 10 ? "0" + hourValue + ":00" : hourValue + ":00";
-            const halfHourStr = hourValue < 10 ? "0" + hourValue + ":30" : hourValue + ":30";
-            
-            combinedMap[hour] = {
-                hour: hourStr,
-                timeEntries: []
-            };
-            combinedMap[hour + 1] = {
-                hour: halfHourStr,
-                timeEntries: []
-            };
-            timeIntervalToIndexMap.set(hourStr, hour);
-            timeIntervalToIndexMap.set(halfHourStr, hour + 1);
-        }
-
-        if (!dayEntries || dayEntries.length === 0) { return Object.values(combinedMap); }
-
-        const filteredEntries = dayEntries.filter(dayEntry => dayEntry.date.substring(0, 4) === yearString);
-
-        filteredEntries.forEach((dayEntry) => {
-            if (!dayEntry.timeEntries) { return; }
-            
-            dayEntry.timeEntries.forEach((timeEntry: TimeEntry) => {
-                // Handle both string format ("T14:30:00Z") and dayjs object
-                let timeString: string;
-                const timeValue = timeEntry.time as any;
-                if (typeof timeValue === 'string') {
-                    // If it's a string, extract HH:mm from format "THH:mm:ssZ"
-                    timeString = timeValue.substring(1, 6);
-                } else if (timeValue && typeof timeValue.format === 'function') {
-                    // If it's a dayjs object, format it as HH:mm
-                    timeString = timeValue.format('HH:mm');
-                } else { return; }
-                
-                const index = timeIntervalToIndexMap.get(timeString);
-                if (index !== undefined) {
-                    combinedMap[index].timeEntries.push(timeEntry);  
-                }
-            });
-        });
-        return Object.values(combinedMap);
-    }, [dayEntries]);
+    const createHourlyEntries = useCallback((dayEntries: DayEntry[], year: number): HourlyEntry[] => { return CreateHourlyEntries(dayEntries, year); }, [dayEntries]);
 
     const sortWeekEntriesByTime = useCallback((weekEntries: WeekEntry[]) => {
         if(weekEntries.length == 1) { return weekEntries }
         return [...weekEntries].sort((a, b) => a.week - b.week)
     }, []);
 
-    const isSelectedYearLeapYear = useMemo(() => {
-        return dayjs().year(selectedDate).isLeapYear();
-    }, [selectedDate]);
-
     const getTotalTimeEntriesHours = useCallback((entries: DayOfWeekEntry[] | HourlyEntry[]): number => {
         return entries.flatMap((entry) =>  entry.timeEntries).length / 2;
     }, []);
 
-    const getTotalTimeEntriesHoursByCategory = useCallback((category: string, entry: WeekEntry | DayOfWeekEntry | HourlyEntry): number => {
-        if (!entry.timeEntries) { return 0; }
-
-        // Find the category index by name
-        const categoryIndex = userCategories.findIndex(cat => cat.name === category);
-        if (categoryIndex === -1) { return 0; }
-        
-        // Handles both nested arrays (WeekEntry) and flat arrays (DayOfWeekEntry, HourlyEntry)
-        let count = 0;
-        const timeEntries = entry.timeEntries;
-        for (let i = 0; i < timeEntries.length; i++) {
-            const timeEntry = timeEntries[i];
-            if (timeEntry === null) { continue; }
-            
-            if (Array.isArray(timeEntry)) {
-                // Nested array case (WeekEntry)
-                for (let j = 0; j < timeEntry.length; j++) {
-                    const nestedTimeEntry = timeEntry[j];
-                    if (nestedTimeEntry && (typeof nestedTimeEntry.category === 'number' ? nestedTimeEntry.category : Number(nestedTimeEntry.category)) === categoryIndex) { count++; }
-                }
-            } else if (timeEntry && (typeof timeEntry.category === 'number' ? timeEntry.category : Number(timeEntry.category)) === categoryIndex) { count++; } // Flat array case (DayOfWeekEntry, HourlyEntry)
-        }
-        return count / 2;
-    }, [userCategories]);
-
-    const getAverageTimeEntriesHoursByCategory = useCallback((category: string, entry: WeekEntry | DayOfWeekEntry | HourlyEntry, chartType: ChartType): number => {
-        if (!entry.timeEntries) { return 0; }
-        
-        // Find the category index by name
-        const categoryIndex = userCategories.findIndex(cat => cat.name === category);
-        if (categoryIndex === -1) { return 0; }
-        
-        let totalTimeEntries = 0;
-        if(chartType === ChartType.WEEKLY) {
-            totalTimeEntries = 14;
-        } else if(chartType === ChartType.DAILY) {
-            totalTimeEntries = isSelectedYearLeapYear ? 366 : 365;
-        }
-        // Handles both nested arrays (WeekEntry) and flat arrays (DayOfWeekEntry, HourlyEntry)
-        let count = 0;
-        const timeEntries = entry.timeEntries;
-        for (let i = 0; i < timeEntries.length; i++) {
-            const timeEntry = timeEntries[i];
-            if (timeEntry === null) { continue; }      
-            
-            if (Array.isArray(timeEntry)) {
-                // Nested array case (WeekEntry)
-                for (let j = 0; j < timeEntry.length; j++) {
-                    const nestedTimeEntry = timeEntry[j];
-                    if (nestedTimeEntry && (typeof nestedTimeEntry.category === 'number' ? nestedTimeEntry.category : Number(nestedTimeEntry.category)) === categoryIndex) { count++; }
-                }
-            } else if (timeEntry && (typeof timeEntry.category === 'number' ? timeEntry.category : Number(timeEntry.category)) === categoryIndex) { count++; } // Flat array case (DayOfWeekEntry, HourlyEntry)
-        }
-        if (totalTimeEntries === 0) { return 0; }
-        return count / totalTimeEntries;
-    }, [isSelectedYearLeapYear, userCategories]);
-
-    const createPieChartData = useCallback((entries: DayOfWeekEntry[] | HourlyEntry[]): PieChartData[] => {
-        const data: PieChartData[] = [];
-        if (!entries || !Array.isArray(entries)) { return []; }
-        
-        const allTimeEntries = entries.flatMap((entry) => entry.timeEntries || []);
-        
-        userCategories.forEach((categoryEntry) => {
-            const count = allTimeEntries.filter((timeEntry) => timeEntry && (typeof timeEntry.category === 'number' ? timeEntry.category : Number(timeEntry.category)) === Number(categoryEntry.id)).length;
-            data.push({ 
-                id: Number(categoryEntry.id), 
-                value: count / 2, 
-                label: categoryEntry.name, 
-                color: categoryEntry.color 
-            });
-        })   
-        return data;
-    }, [userCategories]);
-    
-    const convertDayOfWeekToDayOfWeekName = useCallback((dayOfWeek: number) => {
-        switch(dayOfWeek) {
-            case 0: return "Sun";
-            case 1: return "Mon";
-            case 2: return "Tue";
-            case 3: return "Wed";
-            case 4: return "Thu";
-            case 5: return "Fri";
-            case 6: return "Sat";
-        }
-        return "";
-    }, []);
+    const createPieChartData = useCallback((entries: DayOfWeekEntry[] | HourlyEntry[]): PieChartData[] => { return CreatePieChartData(entries, userCategories) }, [userCategories]);
 
     const createWeekEntriesBarChartData = useCallback((category: string, type: "total" | "average", weekEntries: any[]): { xData: number[]; yData: number[] } => {
-        const xData: number[] = [];
-        const yData: number[] = [];
-        if (!weekEntries || !Array.isArray(weekEntries)) { return { xData, yData }; }
-        weekEntries.forEach((weekEntry) => {
-            xData.push(weekEntry.week);
-            yData.push(type === "total" ? getTotalTimeEntriesHoursByCategory(category, weekEntry) : getAverageTimeEntriesHoursByCategory(category, weekEntry, ChartType.WEEKLY));
-        })
-        return { xData, yData };
-    }, [getTotalTimeEntriesHoursByCategory, getAverageTimeEntriesHoursByCategory]);
-    
-    const convertHourToHourName = useCallback((hour: string) => {
-        const hourNum = parseInt(hour.substring(0, 2), 10);
-        const minutes = hour.substring(3); // Extract minutes (skip "HH:")
-        const period = hourNum < 12 ? 'AM' : 'PM';
-        const displayHour = hourNum === 0 ? 12 : (hourNum > 12 ? hourNum - 12 : hourNum);
-        return `${displayHour}:${minutes} ${period}`;
-    }, []);
+        return CreateWeekEntriesChartData(category, type, weekEntries, userCategories, selectedDate);
+    }, [userCategories, selectedDate]);
     
     const createDayOfWeekEntriesBarChartData = useCallback((category: string, type: "total" | "average", dayOfWeekEntries: DayOfWeekEntry[]): { xData: string[]; yData: number[] } => {
-        const xData: string[] = [];
-        const yData: number[] = [];
-        if (!dayOfWeekEntries || !Array.isArray(dayOfWeekEntries)) { return { xData, yData }; }
-        dayOfWeekEntries.forEach((dayOfWeekEntry) => {
-            xData.push(convertDayOfWeekToDayOfWeekName(dayOfWeekEntry.dayOfWeek as number));
-            yData.push(type === "total" ? getTotalTimeEntriesHoursByCategory(category, dayOfWeekEntry) : getAverageTimeEntriesHoursByCategory(category, dayOfWeekEntry, ChartType.DAILY));
-        })
-        return { xData, yData };
-    }, [getTotalTimeEntriesHoursByCategory, getAverageTimeEntriesHoursByCategory, convertDayOfWeekToDayOfWeekName]);    
+        return CreateDayOfWeekEntriesBarChartData(category, type, dayOfWeekEntries, userCategories, selectedDate);
+    }, [userCategories, selectedDate]);    
 
     const createHourlyEntriesBarChartData = useCallback((category: string, type: "total" | "average", hourlyEntries: any[]): { xData: string[]; yData: number[] } => {
-        const xData: string[] = [];
-        const yData: number[] = [];
-        if (!hourlyEntries || !Array.isArray(hourlyEntries)) { return { xData, yData }; }
-        hourlyEntries.forEach((hourlyEntry) => {
-            xData.push(convertHourToHourName(hourlyEntry.hour));
-            yData.push(type === "total" ? getTotalTimeEntriesHoursByCategory(category, hourlyEntry) : getAverageTimeEntriesHoursByCategory(category, hourlyEntry, ChartType.HOURLY));
-        })
-        return { xData, yData };
-    }, [getTotalTimeEntriesHoursByCategory, getAverageTimeEntriesHoursByCategory]);
+        return CreateHourlyEntriesBarChartData(category, type, hourlyEntries, userCategories);
+    }, [userCategories]);
 
     const sortChartConfigsByIndex = useCallback((chartConfigs: ChartConfig[]) => {
         return [...chartConfigs].sort((a, b) => (a.index || 0) - (b.index || 0));

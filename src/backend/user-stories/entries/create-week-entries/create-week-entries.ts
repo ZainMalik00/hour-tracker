@@ -1,4 +1,4 @@
-import { DayEntry } from "../../../../../backend/entities/Entries";
+import { DayEntry } from "../../../entities/Entries";
 
 export const CreateWeekEntries = (dayEntries: DayEntry[], year: number): any[] => {
     // Initialize combinedMap with minimum 52 weeks (always include weeks 1-52)
